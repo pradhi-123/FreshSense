@@ -95,19 +95,20 @@ export default function SenseAIApp() {
             title="FreshSense AI Home"
           >
             <div className="sense-header-logo-icon" style={{
-              width: '40px',
+              width: '48px',
               height: '40px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #10B981 0%, #0284C7 100%)',
+              background: '#FFFFFF',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)',
               overflow: 'hidden',
               padding: '2px',
-              flexShrink: 0
+              flexShrink: 0,
+              border: '1.5px solid rgba(16, 185, 129, 0.3)'
             }}>
-              <img src="/favicon.svg" alt="FreshSense AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              <img src="/fresh-logo.png" alt="FreshSense AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div>
               <div style={{

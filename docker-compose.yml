@@ -1,9 +1,0 @@
-version: '3.8'
-services:
-  web:
-    build: .
-    ports:
-      - "5173:80" # map container port 80 to host port 5173 so it matches Vite default dev port
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
