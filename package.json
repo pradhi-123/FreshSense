@@ -1,10 +1,11 @@
 {
-  "name": "virasat",
+  "name": "freshsense",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
     "seed": "npm run seed --prefix server"
   },
   "devDependencies": {

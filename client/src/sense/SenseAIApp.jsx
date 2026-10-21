@@ -94,8 +94,20 @@ export default function SenseAIApp() {
             className="sense-header-brand"
             title="FreshSense AI Home"
           >
-            <div className="sense-header-logo-icon">
-              <Sparkles size={21} color="var(--color-leaf-green)" />
+            <div className="sense-header-logo-icon" style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #10B981 0%, #0284C7 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+              overflow: 'hidden',
+              padding: '2px',
+              flexShrink: 0
+            }}>
+              <img src="/favicon.svg" alt="FreshSense AI" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
             </div>
             <div>
               <div style={{
