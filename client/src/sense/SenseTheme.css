@@ -1,0 +1,1342 @@
+/**
+ * FreshSense AI Design System - Grand Organic Edition
+ * 
+ * Palette:
+ * | Color            | HEX Code | Usage                         |
+ * | 🌿 Fresh Mint    | #DDF3E4  | Feature cards                 |
+ * | 🍃 Soft Green    | #78C99A  | Buttons and highlights        |
+ * | 🌱 Leaf Green    | #419B70  | Icons and active states       |
+ * | 🤍 Milky White   | #FFFFFF  | Cards and containers          |
+ * | 🥛 Vanilla Cream | #FFFDF5  | Main background               |
+ * | 🍑 Peach         | #FFE3D5  | Recipe cards                  |
+ * | 🍋 Butter Yellow | #FFF1B8  | Highlights and badges         |
+ * | 🩵 Powder Blue   | #DCEEFF  | Barcode and package scanning  |
+ * | 💜 Lavender      | #EAE1FF  | AI-powered features           |
+ * | 🖤 Soft Charcoal | #303832  | Headings and text             |
+ * | 🩶 Muted Grey    | #78827B  | Secondary text                |
+ * | 🪴 Light Border  | #E7EDE7  | Card borders                  |
+ */
+
+:root {
+  /* Core Palette Tokens - Refreshing Bluish Tinge Edition */
+  --color-fresh-mint: #DDF3E4;       /* Feature cards */
+  --color-soft-green: #78C99A;       /* Buttons and highlights */
+  --color-leaf-green: #419B70;       /* Icons and active states */
+  --color-milky-white: #FFFFFF;      /* Cards and containers */
+  --color-vanilla-cream: #F0F6FC;    /* Main background with refreshing bluish tinge */
+  --color-peach: #FFE3D5;            /* Recipe cards */
+  --color-butter-yellow: #FFF1B8;    /* Highlights and badges */
+  --color-powder-blue: #DCEEFF;      /* Barcode and package scanning */
+  --color-lavender: #EAE1FF;         /* AI-powered features */
+  --color-soft-charcoal: #303832;    /* Headings and text */
+  --color-muted-grey: #6b7770;       /* Secondary text */
+  --color-light-border: #DDE8F3;     /* Soft blue-tinted card borders */
+
+  /* Semantic Theme Mappings */
+  --sense-bg: var(--color-vanilla-cream);
+  --sense-bg-card: var(--color-milky-white);
+  --sense-bg-card-hover: #F2F7FD;
+  --sense-border: var(--color-light-border);
+  --sense-border-active: var(--color-leaf-green);
+  
+  --sense-text: var(--color-soft-charcoal);
+  --sense-heading: var(--color-soft-charcoal);
+  --sense-muted: var(--color-muted-grey);
+  
+  --sense-primary: var(--color-leaf-green);
+  --sense-primary-hover: var(--color-soft-green);
+  --sense-primary-glow: rgba(65, 155, 112, 0.25);
+  --sense-mint: var(--color-leaf-green);
+  --sense-lime: var(--color-soft-green);
+  --sense-ivory: var(--color-soft-charcoal);
+  --sense-dark: var(--color-soft-charcoal);
+
+  /* Status Colors */
+  --sense-status-fresh: #2e8b57;
+  --sense-status-monitor: #d97706;
+  --sense-status-risk: #e11d48;
+  --sense-status-critical: #be123c;
+
+  --sense-font-display: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --sense-font-mono: 'JetBrains Mono', monospace;
+  
+  /* Ultra-Rounded Geometry */
+  --sense-radius-xs: 12px;
+  --sense-radius-sm: 18px;
+  --sense-radius-md: 26px;
+  --sense-radius-lg: 36px;
+  --sense-radius-xl: 48px;
+  --sense-radius-full: 9999px;
+  
+  /* Grand Elevated Shadows */
+  --sense-shadow-sm: 0 4px 14px rgba(30, 58, 88, 0.05);
+  --sense-shadow-md: 0 12px 32px rgba(30, 58, 88, 0.08);
+  --sense-shadow-lg: 0 20px 48px rgba(30, 58, 88, 0.12);
+  --sense-shadow-floating: 0 24px 60px rgba(65, 155, 112, 0.18);
+  --sense-shadow-floating-blue: 0 24px 60px rgba(37, 99, 235, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #F0F6FC;
+  color: var(--color-soft-charcoal);
+  font-family: var(--sense-font-display);
+  overflow-x: hidden;
+}
+
+.sense-root {
+  min-height: 100vh;
+  width: 100%;
+  background-color: #F0F6FC;
+  background-image: 
+    radial-gradient(circle at 12% 12%, rgba(206, 232, 255, 0.85) 0%, transparent 48%),
+    radial-gradient(circle at 88% 16%, rgba(224, 242, 254, 0.9) 0%, transparent 50%),
+    radial-gradient(circle at 50% 45%, rgba(235, 246, 255, 0.7) 0%, transparent 60%),
+    radial-gradient(circle at 82% 82%, rgba(221, 243, 228, 0.45) 0%, transparent 45%),
+    radial-gradient(circle at 18% 78%, rgba(220, 238, 255, 0.5) 0%, transparent 48%),
+    linear-gradient(180deg, #F0F6FC 0%, #E8F2FA 100%);
+  color: var(--color-soft-charcoal);
+  font-family: var(--sense-font-display);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 48px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Header */
+.sense-header {
+  border-bottom: 1px solid var(--color-light-border);
+  background: rgba(240, 246, 252, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  transition: all 0.25s ease;
+}
+
+.sense-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.sense-header-brand:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.sense-header-logo-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--sense-radius-full);
+  background: radial-gradient(circle at 30% 30%, #FFFFFF, var(--color-fresh-mint) 60%, var(--color-soft-green) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(65, 155, 112, 0.22);
+  transition: transform 0.25s ease;
+}
+
+.sense-header-brand:hover .sense-header-logo-icon {
+  transform: scale(1.06) rotate(6deg);
+}
+
+.sense-nav-back-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: var(--sense-radius-full);
+  background: #ffffff;
+  border: 1.5px solid var(--color-light-border);
+  color: var(--color-soft-charcoal);
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-nav-back-pill:hover {
+  background: var(--color-fresh-mint);
+  border-color: var(--color-leaf-green);
+  color: var(--color-leaf-green);
+  transform: translateX(-3px);
+  box-shadow: 0 4px 16px rgba(65, 155, 112, 0.22);
+}
+
+.sense-header-ready-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--sense-radius-full);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(120, 201, 154, 0.45);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-leaf-green);
+  box-shadow: 0 2px 8px rgba(65, 155, 112, 0.1);
+}
+
+.sense-home-nav-btn:hover {
+  background: var(--color-fresh-mint) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(65, 155, 112, 0.2) !important;
+}
+
+/* Grand Container */
+.sense-container {
+  width: 100%;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* Default Milky White Card */
+.sense-card {
+  background: var(--color-milky-white);
+  border: 1.5px solid var(--color-light-border);
+  border-radius: var(--sense-radius-lg);
+  padding: 28px;
+  box-shadow: var(--sense-shadow-md);
+  color: var(--color-soft-charcoal);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-card:hover {
+  border-color: var(--color-soft-green);
+  box-shadow: var(--sense-shadow-lg);
+}
+
+/* Feature Cards (Fresh Mint) */
+.sense-card-feature {
+  background: var(--color-fresh-mint);
+  border: 1.5px solid rgba(120, 201, 154, 0.5);
+  border-radius: var(--sense-radius-md);
+  padding: 24px;
+  color: var(--color-soft-charcoal);
+  box-shadow: var(--sense-shadow-sm);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-card-feature:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-leaf-green);
+  box-shadow: 0 14px 30px rgba(65, 155, 112, 0.18);
+}
+
+/* Recipe Cards (Modern with Image) */
+.sense-card-recipe {
+  background: #ffffff;
+  border: 1.5px solid rgba(255, 180, 150, 0.6);
+  border-radius: var(--sense-radius-md);
+  overflow: hidden;
+  color: var(--color-soft-charcoal);
+  box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08);
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sense-card-recipe:hover {
+  transform: translateY(-4px);
+  border-color: #ea580c;
+  box-shadow: 0 14px 28px rgba(234, 88, 12, 0.18);
+}
+
+.sense-recipe-image-wrap {
+  position: relative;
+  width: 100%;
+  height: 175px;
+  overflow: hidden;
+  background: #fff7ed;
+}
+
+.sense-recipe-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.sense-card-recipe:hover .sense-recipe-image {
+  transform: scale(1.05);
+}
+
+.sense-recipe-content {
+  padding: 16px 18px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Scanning / Barcode Cards (Powder Blue) */
+.sense-card-scan {
+  background: var(--color-powder-blue);
+  border: 1.5px solid rgba(147, 197, 253, 0.7);
+  border-radius: var(--sense-radius-md);
+  padding: 20px;
+  color: var(--color-soft-charcoal);
+}
+
+/* AI-Powered Feature Cards (Lavender) */
+.sense-card-ai {
+  background: var(--color-lavender);
+  border: 1.5px solid rgba(196, 181, 253, 0.7);
+  border-radius: var(--sense-radius-md);
+  padding: 20px;
+  color: var(--color-soft-charcoal);
+}
+
+/* =========================================================
+   GRAND FLOATING ORBS & ANIMATIONS
+   ========================================================= */
+
+@keyframes sense-float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(1deg);
+  }
+}
+
+@keyframes sense-float-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(-1deg);
+  }
+}
+
+@keyframes sense-float-badge {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes sense-pulse-glow {
+  0%, 100% {
+    box-shadow: 0 16px 45px rgba(65, 155, 112, 0.22), 0 0 0 0 rgba(120, 201, 154, 0.4);
+  }
+  50% {
+    box-shadow: 0 24px 60px rgba(65, 155, 112, 0.35), 0 0 0 18px rgba(120, 201, 154, 0);
+  }
+}
+
+@keyframes sense-pulse-glow-blue {
+  0%, 100% {
+    box-shadow: 0 16px 45px rgba(37, 99, 235, 0.2), 0 0 0 0 rgba(147, 197, 253, 0.45);
+  }
+  50% {
+    box-shadow: 0 24px 60px rgba(37, 99, 235, 0.32), 0 0 0 18px rgba(147, 197, 253, 0);
+  }
+}
+
+@keyframes sense-pulse-glow-orange {
+  0%, 100% {
+    box-shadow: 0 16px 45px rgba(249, 115, 22, 0.22), 0 0 0 0 rgba(253, 186, 116, 0.45);
+  }
+  50% {
+    box-shadow: 0 24px 60px rgba(249, 115, 22, 0.35), 0 0 0 18px rgba(253, 186, 116, 0);
+  }
+}
+
+@keyframes sense-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sense-floating-element {
+  animation: sense-float-slow 5s ease-in-out infinite;
+}
+
+.sense-floating-element-delayed {
+  animation: sense-float-reverse 5s ease-in-out infinite 0.8s;
+}
+
+/* Grand Floating Circle Portal */
+.sense-floating-orb {
+  width: clamp(96px, 14vw, 130px);
+  height: clamp(96px, 14vw, 130px);
+  border-radius: var(--sense-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.sense-floating-orb-green {
+  background: radial-gradient(circle at 35% 30%, #FFFFFF 0%, var(--color-fresh-mint) 50%, var(--color-soft-green) 100%);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  animation: sense-float-slow 4.5s ease-in-out infinite, sense-pulse-glow 3.5s infinite;
+}
+
+.sense-floating-orb-green:hover {
+  transform: translateY(-18px) scale(1.08) !important;
+}
+
+.sense-floating-orb-blue {
+  background: radial-gradient(circle at 35% 30%, #FFFFFF 0%, var(--color-powder-blue) 50%, #93c5fd 100%);
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  animation: sense-float-reverse 4.5s ease-in-out infinite 0.6s, sense-pulse-glow-blue 3.5s infinite 0.6s;
+}
+
+.sense-floating-orb-blue:hover {
+  transform: translateY(-18px) scale(1.08) !important;
+}
+
+/* Outer Orbit Rings */
+.sense-orb-ring {
+  position: absolute;
+  inset: -12px;
+  border-radius: var(--sense-radius-full);
+  border: 1.5px dashed rgba(65, 155, 112, 0.35);
+  animation: sense-spin-slow 24s linear infinite;
+  pointer-events: none;
+}
+
+.sense-orb-ring-blue {
+  position: absolute;
+  inset: -12px;
+  border-radius: var(--sense-radius-full);
+  border: 1.5px dashed rgba(37, 99, 235, 0.35);
+  animation: sense-spin-slow 24s linear infinite reverse;
+  pointer-events: none;
+}
+
+/* =========================================================
+   GRAND MODE CARDS
+   ========================================================= */
+
+.sense-mode-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--sense-radius-xl);
+  padding: 38px 32px;
+  cursor: pointer;
+  border: 2px solid var(--color-light-border);
+  background: var(--color-milky-white);
+  box-shadow: var(--sense-shadow-md);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--color-soft-charcoal);
+}
+
+.sense-mode-card:hover {
+  transform: translateY(-8px);
+  border-color: var(--color-leaf-green);
+  box-shadow: var(--sense-shadow-floating);
+}
+
+.sense-mode-card-blue:hover {
+  border-color: #3b82f6;
+  box-shadow: var(--sense-shadow-floating-blue);
+}
+
+/* Gradient Headings */
+.sense-title-gradient {
+  background: linear-gradient(135deg, #303832 10%, #419B70 65%, #78C99A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Buttons - Pill Capsule */
+.sense-btn-primary {
+  background: var(--color-leaf-green);
+  color: #ffffff;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--sense-radius-full);
+  padding: 14px 28px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 18px rgba(65, 155, 112, 0.28);
+  transition: all 0.25s ease;
+}
+
+.sense-btn-primary:hover:not(:disabled) {
+  background: var(--color-soft-green);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(120, 201, 154, 0.42);
+}
+
+.sense-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sense-btn-secondary {
+  background: var(--color-milky-white);
+  color: var(--color-soft-charcoal);
+  font-weight: 700;
+  border: 1.5px solid var(--color-light-border);
+  border-radius: var(--sense-radius-full);
+  padding: 13px 24px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: var(--sense-shadow-sm);
+  transition: all 0.25s ease;
+}
+
+.sense-btn-secondary:hover:not(:disabled) {
+  background: var(--color-fresh-mint);
+  border-color: var(--color-soft-green);
+  color: var(--color-leaf-green);
+  transform: translateY(-2px);
+}
+
+/* Badges - Capsule Pill */
+.sense-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--sense-radius-full);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.sense-badge-hardware-on {
+  background: var(--color-fresh-mint);
+  border: 1.5px solid var(--color-soft-green);
+  color: var(--color-leaf-green);
+}
+
+.sense-badge-hardware-off {
+  background: #f1f5f9;
+  border: 1.5px solid var(--color-light-border);
+  color: var(--color-muted-grey);
+}
+
+.sense-badge-highlight {
+  background: var(--color-butter-yellow);
+  border: 1.5px solid rgba(234, 179, 8, 0.45);
+  color: #854d0e;
+}
+
+.sense-badge-scan {
+  background: var(--color-powder-blue);
+  border: 1.5px solid rgba(147, 197, 253, 0.7);
+  color: #1e40af;
+}
+
+.sense-badge-ai {
+  background: var(--color-lavender);
+  border: 1.5px solid rgba(196, 181, 253, 0.75);
+  color: #5b21b6;
+}
+
+/* Pulse Animation */
+@keyframes sense-pulse-dot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.sense-dot-live {
+  width: 9px;
+  height: 9px;
+  border-radius: var(--sense-radius-full);
+  background-color: var(--color-leaf-green);
+  animation: sense-pulse-dot 2s infinite ease-in-out;
+}
+
+/* Camera Viewport */
+.sense-camera-viewport {
+  position: relative;
+  width: 100%;
+  border-radius: var(--sense-radius-lg);
+  overflow: hidden;
+  background: #F4F6F4;
+  border: 2.5px dashed var(--color-soft-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sense-laser-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-leaf-green), transparent);
+  box-shadow: 0 0 14px var(--color-soft-green);
+  animation: laser-scan 2.4s infinite ease-in-out;
+}
+
+@keyframes laser-scan {
+  0% { top: 5%; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: 95%; opacity: 0; }
+}
+
+
+/* Form Inputs, Selects, and Textareas - Fully Rounded */
+.sense-input,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select,
+textarea {
+  background-color: var(--color-milky-white);
+  color: var(--color-soft-charcoal);
+  border: 1.5px solid var(--color-light-border);
+  border-radius: var(--sense-radius-full);
+  padding: 12px 18px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea {
+  border-radius: var(--sense-radius-md);
+}
+
+.sense-input:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-leaf-green);
+  box-shadow: 0 0 0 4px rgba(120, 201, 154, 0.28);
+}
+
+/* =========================================================
+   100% RESPONSIVE MEDIA QUERIES
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .sense-container {
+    padding: 18px 16px;
+  }
+  .sense-mode-grid {
+    grid-template-columns: 1fr !important;
+    gap: 22px !important;
+  }
+}
+
+/* =========================================================
+   GRAND FLOATING CIRCULAR MODE PORTALS
+   ========================================================= */
+
+.sense-grand-circle-hub {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(32px, 6vw, 68px);
+  margin: 36px auto 52px auto;
+  flex-wrap: wrap;
+}
+
+.sense-portal-card,
+.sense-grand-circle {
+  width: clamp(285px, 32vw, 325px);
+  height: clamp(285px, 32vw, 325px);
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-align: center;
+  padding: 24px 20px;
+  user-select: none;
+  box-sizing: border-box;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-portal-green,
+.sense-grand-circle-green {
+  background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.98) 0%, rgba(237, 250, 242, 0.92) 45%, rgba(187, 247, 208, 0.75) 100%);
+  border: 4px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 28px 70px rgba(34, 197, 94, 0.26), 0 0 0 1px rgba(255, 255, 255, 0.8), inset 0 2px 18px rgba(255, 255, 255, 0.98);
+  animation: sense-portal-float-1 6s ease-in-out infinite;
+}
+
+.sense-portal-green:hover,
+.sense-grand-circle-green:hover {
+  transform: translateY(-16px) scale(1.05) !important;
+  box-shadow: 0 36px 90px rgba(34, 197, 94, 0.42), 0 0 50px rgba(74, 222, 128, 0.45), inset 0 2px 20px rgba(255, 255, 255, 1);
+  border-color: #ffffff;
+}
+
+.sense-portal-orange,
+.sense-grand-circle-orange {
+  background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.98) 0%, rgba(255, 245, 235, 0.92) 45%, rgba(254, 215, 170, 0.75) 100%);
+  border: 4px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 28px 70px rgba(249, 115, 22, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.8), inset 0 2px 18px rgba(255, 255, 255, 0.98);
+  animation: sense-portal-float-2 6s ease-in-out infinite 0.9s;
+}
+
+.sense-portal-orange:hover,
+.sense-grand-circle-orange:hover {
+  transform: translateY(-16px) scale(1.05) !important;
+  box-shadow: 0 36px 90px rgba(249, 115, 22, 0.42), 0 0 50px rgba(251, 146, 60, 0.45), inset 0 2px 20px rgba(255, 255, 255, 1);
+  border-color: #ffffff;
+}
+
+@keyframes sense-portal-float-1 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(0.8deg); }
+}
+
+@keyframes sense-portal-float-2 {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(-0.8deg); }
+}
+
+.sense-portal-orb-ring,
+.sense-grand-orb-ring {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2.5px dashed rgba(34, 197, 94, 0.45);
+  box-shadow: 0 0 25px rgba(74, 222, 128, 0.2);
+  animation: sense-spin-slow 22s linear infinite;
+}
+
+.sense-portal-ring-orange,
+.sense-grand-orb-ring-orange {
+  position: absolute;
+  inset: -16px;
+  border-radius: 50%;
+  pointer-events: none;
+  border: 2.5px dashed rgba(249, 115, 22, 0.45);
+  box-shadow: 0 0 25px rgba(251, 146, 60, 0.2);
+  animation: sense-spin-slow 22s linear infinite reverse;
+}
+
+/* =========================================================
+   AURORA GLOWS & GLASS EFFECTS
+   ========================================================= */
+
+.sense-aurora-glow-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 740px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.sense-aurora-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.sense-blob-emerald {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(74, 222, 128, 0.45) 0%, rgba(34, 197, 94, 0.12) 65%, transparent 100%);
+  top: -80px;
+  left: 8%;
+  animation: sense-blob-drift-1 14s ease-in-out infinite alternate;
+}
+
+.sense-blob-cyan {
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.42) 0%, rgba(14, 165, 233, 0.1) 65%, transparent 100%);
+  top: 20px;
+  right: 8%;
+  animation: sense-blob-drift-2 16s ease-in-out infinite alternate;
+}
+
+.sense-blob-amber {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.38) 0%, rgba(249, 115, 22, 0.08) 65%, transparent 100%);
+  bottom: 10px;
+  left: 28%;
+  animation: sense-blob-drift-3 15s ease-in-out infinite alternate;
+}
+
+.sense-blob-violet {
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.32) 0%, rgba(139, 92, 246, 0.05) 65%, transparent 100%);
+  top: 180px;
+  left: 2%;
+  animation: sense-blob-drift-4 19s ease-in-out infinite alternate;
+}
+
+@keyframes sense-blob-drift-1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(45px, 35px) scale(1.12); }
+  100% { transform: translate(-30px, 55px) scale(0.95); }
+}
+
+@keyframes sense-blob-drift-2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-55px, 45px) scale(1.1); }
+  100% { transform: translate(35px, -35px) scale(0.9); }
+}
+
+@keyframes sense-blob-drift-3 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-35px, -50px) scale(1.14); }
+  100% { transform: translate(50px, -25px) scale(0.94); }
+}
+
+@keyframes sense-blob-drift-4 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, -30px) scale(1.08); }
+  100% { transform: translate(-25px, 40px) scale(0.92); }
+}
+
+.sense-hero-glass-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  border-radius: var(--sense-radius-full);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 24px rgba(30, 58, 88, 0.08), 0 0 16px rgba(74, 222, 128, 0.15);
+  margin-bottom: 20px;
+  animation: sense-float-badge 3.5s ease-in-out infinite;
+}
+
+.sense-card-feature {
+  background: rgba(255, 255, 255, 0.82) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 16px 40px rgba(30, 58, 88, 0.06), inset 0 1px 4px rgba(255, 255, 255, 0.9) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.sense-card-feature:hover {
+  transform: translateY(-8px) scale(1.02) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(74, 222, 128, 0.5) !important;
+  box-shadow: 0 24px 50px rgba(30, 58, 88, 0.12), 0 0 24px rgba(74, 222, 128, 0.2) !important;
+}
+
+.sense-portal-icon-wrapper {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-portal-card:hover .sense-portal-icon-wrapper,
+.sense-grand-circle:hover .sense-portal-icon-wrapper {
+  transform: scale(1.1) translateY(-2px);
+}
+
+.sense-portal-icon-green {
+  background: radial-gradient(circle at 30% 30%, #FFFFFF 20%, #E8F9EE 70%, #CEF2DC 100%);
+  box-shadow: 0 8px 20px rgba(65, 155, 112, 0.22);
+}
+
+.sense-portal-icon-orange {
+  background: radial-gradient(circle at 30% 30%, #FFFFFF 20%, #FFF5EB 70%, #FFE5D4 100%);
+  box-shadow: 0 8px 22px rgba(249, 115, 22, 0.28);
+}
+
+.sense-portal-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 3px 12px;
+  border-radius: var(--sense-radius-full);
+  margin-bottom: 3px;
+}
+
+.sense-portal-tag-green {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--color-leaf-green);
+  border: 1px solid rgba(120, 201, 154, 0.6);
+}
+
+.sense-portal-tag-orange {
+  background: rgba(255, 255, 255, 0.92);
+  color: #c2410c;
+  border: 1px solid rgba(253, 186, 116, 0.7);
+}
+
+.sense-portal-title {
+  margin: 1px 0 0 0;
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: var(--color-soft-charcoal);
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+.sense-portal-desc {
+  margin: 3px 0 10px 0;
+  font-size: 0.78rem;
+  color: var(--color-soft-charcoal);
+  opacity: 0.85;
+  font-weight: 600;
+  line-height: 1.3;
+  max-width: 190px;
+}
+
+/* Beautiful Action Buttons inside Portals */
+.sense-portal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  border-radius: var(--sense-radius-full);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-portal-btn-green {
+  background: linear-gradient(135deg, var(--color-leaf-green) 0%, #1e5a3c 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(46, 125, 86, 0.38);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+}
+
+.sense-portal-btn-orange {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgba(234, 88, 12, 0.38);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+}
+
+.sense-btn-arrow {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-portal-card:hover .sense-portal-btn,
+.sense-grand-circle:hover .sense-portal-btn {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.sense-portal-card:hover .sense-portal-btn-green,
+.sense-grand-circle:hover .sense-portal-btn-green {
+  box-shadow: 0 10px 24px rgba(46, 125, 86, 0.55);
+}
+
+.sense-portal-card:hover .sense-portal-btn-orange,
+.sense-grand-circle:hover .sense-portal-btn-orange {
+  box-shadow: 0 10px 24px rgba(234, 88, 12, 0.55);
+}
+
+.sense-portal-card:hover .sense-btn-arrow,
+.sense-grand-circle:hover .sense-btn-arrow {
+  transform: translateX(4px);
+}
+
+/* =========================================================
+   ELEGANT SCROLLBARS & UTILITIES
+   ========================================================= */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(240, 246, 252, 0.8);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-leaf-green);
+}
+
+/* Stepper Bar Responsive Styles */
+.sense-stepper-bar {
+  background: var(--color-milky-white);
+  border-radius: var(--sense-radius-full);
+  padding: 8px 12px;
+  border: 1.5px solid var(--color-light-border);
+  box-shadow: 0 8px 24px rgba(30, 58, 88, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sense-stepper-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.sense-stepper-btn {
+  flex: 1;
+  min-width: 150px;
+  border: none;
+  padding: 10px 16px;
+  border-radius: var(--sense-radius-full);
+  font-weight: 800;
+  font-size: 0.86rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+/* Camera Frame Corner Brackets */
+.sense-scanner-frame {
+  position: relative;
+  border-radius: var(--sense-radius-lg);
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  border: 2px solid rgba(16, 185, 129, 0.4);
+}
+
+/* Shutter Button with Pulse Effect */
+.sense-shutter-btn {
+  background: linear-gradient(135deg, var(--color-leaf-green) 0%, #15803d 100%);
+  color: #ffffff;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: var(--sense-radius-full);
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sense-shutter-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(22, 163, 74, 0.6);
+}
+
+.sense-shutter-btn:active {
+  transform: scale(0.97);
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* =========================================================
+   COMPREHENSIVE RESPONSIVE BREAKPOINTS
+   ========================================================= */
+
+@media (max-width: 1024px) {
+  .sense-container {
+    padding: 20px 16px;
+  }
+  .sense-grand-circle-hub {
+    gap: 40px;
+    margin: 32px auto 48px auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .sense-container {
+    padding: 16px 12px;
+  }
+  .sense-header-inner {
+    padding: 12px 16px !important;
+  }
+  .sense-hero-title {
+    font-size: 2.1rem !important;
+    line-height: 1.2 !important;
+  }
+  .sense-grand-circle-hub {
+    gap: 32px !important;
+    margin: 24px auto 36px auto !important;
+  }
+  .sense-portal-card,
+  .sense-grand-circle {
+    width: 280px !important;
+    height: 280px !important;
+    padding: 22px 18px !important;
+  }
+  .sense-portal-title {
+    font-size: 1.35rem !important;
+  }
+  .sense-portal-desc {
+    font-size: 0.76rem !important;
+    margin: 2px 0 8px 0 !important;
+    max-width: 180px !important;
+  }
+  .sense-portal-btn {
+    padding: 8px 18px !important;
+    font-size: 0.82rem !important;
+  }
+  .sense-card {
+    padding: 20px 16px !important;
+    border-radius: var(--sense-radius-md) !important;
+  }
+  .sense-stepper-btn {
+    min-width: 130px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sense-root {
+    padding-bottom: 72px;
+  }
+  .sense-header-inner {
+    padding: 10px 14px !important;
+    flex-direction: row;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+  .sense-hero-title {
+    font-size: 1.85rem !important;
+  }
+  .sense-grand-circle-hub {
+    flex-direction: column;
+    align-items: center;
+    gap: 28px !important;
+    margin: 20px auto 36px auto !important;
+  }
+  .sense-portal-card,
+  .sense-grand-circle {
+    width: 275px !important;
+    height: 275px !important;
+    padding: 20px 16px !important;
+  }
+  .sense-portal-orb-ring,
+  .sense-portal-ring-orange,
+  .sense-grand-orb-ring,
+  .sense-grand-orb-ring-blue,
+  .sense-grand-orb-ring-orange {
+    inset: -10px !important;
+  }
+  .sense-btn-primary,
+  .sense-btn-secondary {
+    padding: 11px 18px;
+    font-size: 0.85rem;
+  }
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS */
+    padding: 12px 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sense-portal-card,
+  .sense-grand-circle {
+    width: 260px !important;
+    height: 260px !important;
+    padding: 18px 14px !important;
+  }
+  .sense-portal-icon-wrapper {
+    width: 52px !important;
+    height: 52px !important;
+    margin-bottom: 4px !important;
+  }
+  .sense-portal-icon-wrapper svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+  .sense-portal-title {
+    font-size: 1.25rem !important;
+  }
+  .sense-portal-desc {
+    font-size: 0.72rem !important;
+    margin: 2px 0 6px 0 !important;
+    max-width: 170px !important;
+  }
+  .sense-portal-btn {
+    padding: 7px 16px !important;
+    font-size: 0.78rem !important;
+  }
+  .sense-hero-title {
+    font-size: 1.6rem !important;
+  }
+  .sense-card {
+    padding: 16px 12px !important;
+  }
+}
+
+/* =========================================================
+   CREATIVE MULTI-PHASE FORENSIC SCANNER (PACKAGED FOOD OCR)
+   ========================================================= */
+.sense-forensic-loading-box {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.85) 0%, rgba(224, 231, 255, 0.7) 50%, rgba(254, 243, 199, 0.75) 100%);
+  border: 1.5px solid rgba(99, 102, 241, 0.35);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 20px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 36px rgba(99, 102, 241, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: sense-box-breathe 3s ease-in-out infinite alternate;
+}
+
+@keyframes sense-box-breathe {
+  0% { box-shadow: 0 10px 30px rgba(99, 102, 241, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8); }
+  100% { box-shadow: 0 14px 44px rgba(99, 102, 241, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.95); }
+}
+
+.sense-forensic-visual-stage {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 18px;
+}
+
+/* Concentric Dual-Orbit Radar Rings */
+.sense-radar-core {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sense-radar-ring-outer {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px dashed #4f46e5;
+  animation: sense-spin-clockwise 6s linear infinite;
+  box-shadow: 0 0 14px rgba(79, 70, 229, 0.25);
+}
+
+.sense-radar-ring-inner {
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #f59e0b;
+  border-bottom-color: #06b6d4;
+  animation: sense-spin-counter 2.8s linear infinite;
+}
+
+.sense-radar-center-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #ec4899 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 0 18px rgba(236, 72, 153, 0.55);
+  animation: sense-pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes sense-spin-clockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sense-spin-counter {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes sense-pulse-glow {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.12); filter: brightness(1.25); }
+}
+
+/* Laser Scanline for Picture Preview */
+.sense-scan-preview-wrap {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.sense-laser-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent 0%, #38bdf8 30%, #4f46e5 70%, transparent 100%);
+  box-shadow: 0 0 12px #38bdf8, 0 0 24px #4f46e5;
+  animation: sense-laser-sweep 1.8s ease-in-out infinite alternate;
+  z-index: 5;
+}
+
+@keyframes sense-laser-sweep {
+  0% { top: 0%; opacity: 0.7; }
+  100% { top: 96%; opacity: 1; }
+}
+
+/* Shimmering Dynamic Progress Bar */
+.sense-progress-shimmer-bar {
+  background: linear-gradient(90deg, #4f46e5 0%, #06b6d4 50%, #f59e0b 100%);
+  background-size: 200% 100%;
+  animation: sense-shimmer-flow 2s linear infinite;
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.45);
+}
+
+@keyframes sense-shimmer-flow {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+

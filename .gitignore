@@ -7,12 +7,31 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies & Build artifacts
 node_modules
+client/node_modules
+server/node_modules
 dist
+client/dist
 dist-ssr
 *.local
 .env
+*.env
 env.txt
+
+# Binaries, Executables & Virtual Environments
+*.exe
+cloudflared.exe
+scratch/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Media recordings & videos
+*.mp4
+*.webm
 
 # Editor directories and files
 .vscode/*

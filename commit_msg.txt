@@ -1,1 +1,0 @@
-style: remove line clamp limits on event descriptions across all dashboards

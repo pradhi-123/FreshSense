@@ -1,0 +1,61 @@
+import mongoose from 'mongoose';
+
+const craftProfileSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  title: { type: String, required: true },
+  imageUrl: { type: String },
+  craftCategory: { type: String },
+  aiPredictions: {
+    craftType: String,
+    materials: [{ name: String, confidence: Number, reason: String }],
+    colors: [{ name: String, hex: String, percent: Number }],
+    textures: [String],
+    techniques: [String],
+    motifs: [String],
+    suggestedOrigin: { tradition: String, region: String, confidence: Number },
+  },
+  verifiedMaterials: [{
+    name: { type: String },
+    confirmed: { type: Boolean, default: true },
+    quantity: { type: String, default: '' },
+    unit: { type: String, default: 'pcs' },
+    unknownQuantity: { type: Boolean, default: false },
+  }],
+  verifiedColors: [{ name: String, hex: String, percent: Number }],
+  verifiedTextures: [String],
+  verifiedOrigin: {
+    state: String,
+    district: String,
+    village: String,
+    craftTradition: String,
+    historicalNotes: String,
+  },
+  artisanInterview: {
+    artisanName: String,
+    yearsPractising: String,
+    teacher: String,
+    traditionalFamilyCraft: Boolean,
+    inspiration: String,
+    difficulties: String,
+    completionDuration: String,
+    specialQuality: String,
+    personalMemory: String,
+    culturalStory: String,
+  },
+  generatedStory: {
+    introduction: String,
+    materialsCraftsmanship: String,
+    artisanJourney: String,
+    culturalSignificance: String,
+    uniqueness: String,
+    finalStory: String,
+    language: String,
+    isApproved: Boolean,
+    approvedAt: Date,
+  },
+  status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+  language: { type: String, default: 'hi' },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export default mongoose.models.CraftProfile || mongoose.model('CraftProfile', craftProfileSchema);

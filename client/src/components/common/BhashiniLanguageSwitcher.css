@@ -1,0 +1,187 @@
+.bhashini-switcher-wrap {
+  position: relative;
+  z-index: 100;
+}
+
+.bhashini-switcher-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2B2420;
+  border: 1.5px solid #C8963E;
+  color: #F3E3BE;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(43, 36, 32, 0.25);
+  flex-shrink: 0;
+}
+
+.bhashini-switcher-btn:hover {
+  background: #3a302a;
+  border-color: #E9C77B;
+  box-shadow: 0 0 12px rgba(200, 150, 62, 0.4);
+  transform: scale(1.05);
+}
+
+.switcher-icon {
+  font-size: 1rem;
+}
+
+.switcher-lang-text {
+  letter-spacing: 0.02em;
+}
+
+.switcher-badge {
+  background: var(--gold, #C8963E);
+  color: #2B2420;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+}
+
+/* Modal Overlay mounted directly to document.body via Portal */
+.bhashini-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  background: rgba(18, 12, 8, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+.bhashini-modal-card {
+  background: #1A120B;
+  border: 1.5px solid #C8963E;
+  border-radius: var(--radius-lg, 20px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(200, 150, 62, 0.25);
+  width: min(92vw, 500px);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: modal-scale-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bhashini-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid rgba(200, 150, 62, 0.25);
+  background: #2B2420;
+}
+
+.bhashini-brand-glow {
+  font-family: var(--font-ui, sans-serif);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #E9C77B;
+  text-transform: uppercase;
+  display: block;
+}
+
+.bhashini-header-title h3 {
+  font-family: var(--font-story, serif);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #FFFBF3;
+  margin: 2px 0 0 0;
+}
+
+.bhashini-modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(233, 199, 123, 0.3);
+  color: #F3E3BE;
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.bhashini-modal-close:hover {
+  background: #C8963E;
+  color: #2B2420;
+  border-color: #E9C77B;
+}
+
+.bhashini-lang-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  padding: 20px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.bhashini-lang-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  background: #2B2420;
+  border: 1px solid rgba(233, 199, 123, 0.3);
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bhashini-lang-chip:hover {
+  background: #3d322b;
+  border-color: #E9C77B;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(200, 150, 62, 0.3);
+}
+
+.bhashini-lang-chip.is-active {
+  background: linear-gradient(135deg, rgba(200, 150, 62, 0.35), rgba(138, 99, 32, 0.45));
+  border: 1.5px solid #E9C77B;
+  box-shadow: 0 0 16px rgba(233, 199, 123, 0.4);
+}
+
+.lang-chip-script {
+  font-family: var(--font-story, serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #E9C77B;
+}
+
+.lang-chip-name {
+  font-family: var(--font-ui, sans-serif);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #F7EFDF;
+  margin-top: 4px;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-scale-up {
+  from { transform: scale(0.92) translateY(12px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}

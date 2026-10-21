@@ -1,0 +1,344 @@
+.capture-studio-page {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  background: var(--ivory);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  transition: background 0.4s var(--ease);
+}
+
+.capture-studio-page.mode-weaving {
+  background: var(--ink) !important;
+  color: var(--ivory) !important;
+}
+
+/* Top Bar */
+.studio-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(247, 239, 223, 0.95);
+  border-bottom: 1px solid var(--honey);
+  z-index: 50;
+}
+
+.mode-weaving .studio-top-bar {
+  background: var(--ink);
+  border-bottom-color: rgba(233, 199, 123, 0.2);
+}
+
+.studio-back-btn {
+  background: transparent;
+  border: 1px solid var(--honey);
+  color: var(--lac);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.studio-back-btn:hover {
+  background: var(--honey-tint);
+}
+
+.studio-title-box {
+  text-align: center;
+}
+
+.studio-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--gold-deep);
+  text-transform: uppercase;
+}
+
+.mode-weaving .studio-eyebrow {
+  color: var(--honey);
+}
+
+.studio-heading {
+  font-family: var(--font-ui);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0;
+}
+
+.mode-weaving .studio-heading {
+  color: var(--ivory);
+}
+
+/* Viewfinder Stage */
+.studio-viewfinder-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 28px 16px;
+  background: var(--ink);
+}
+
+.viewfinder-frame {
+  position: relative;
+  width: min(92vw, 380px);
+  height: min(100vw, 420px);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 2px solid var(--honey);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+}
+
+.viewfinder-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+.viewfinder-preview-img.is-enhanced-filter {
+  filter: contrast(1.08) saturate(1.15) brightness(1.05);
+}
+
+.viewfinder-preview-img.is-raw-filter {
+  filter: contrast(0.92) saturate(0.9) brightness(0.95);
+}
+
+/* Lighting Hint Badge */
+.lighting-hint-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(43, 36, 32, 0.85);
+  border: 1px solid var(--honey);
+  color: var(--honey);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+}
+
+/* RAW vs ENHANCED Viewfinder Overlay Toggle */
+.viewfinder-toggle-bar {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  background: rgba(27, 17, 11, 0.9);
+  border: 1px solid var(--honey);
+  border-radius: 30px;
+  padding: 3px;
+  backdrop-filter: blur(12px);
+}
+
+.toggle-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-mid);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+}
+
+.toggle-tab.is-active {
+  background: var(--gold);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(200, 150, 62, 0.4);
+}
+
+/* Voice Assistant Mic Bar */
+.voice-assistant-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(92vw, 380px);
+  background: rgba(43, 36, 32, 0.9);
+  border: 1px solid var(--honey);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin: 12px 0;
+}
+
+.voice-mic-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid #ffffff;
+  color: var(--ink);
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(200, 150, 62, 0.6);
+  transition: all 0.2s var(--ease);
+}
+
+.voice-mic-btn.is-recording {
+  background: var(--gamosa);
+  animation: mic-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.voice-prompt-box {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.voice-instructions {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--ivory);
+  line-height: 1.3;
+}
+
+.voice-fallback-warning {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--honey);
+  margin-top: 4px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* 3 Primary Camera Controls Bar */
+.camera-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  width: min(92vw, 380px);
+}
+
+.ctrl-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--ivory);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.ctrl-label {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: var(--text-mid);
+  margin-top: 4px;
+}
+
+.ctrl-shutter-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: transparent;
+  border: 4px solid var(--gold);
+  padding: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(200, 150, 62, 0.5);
+  transition: transform 0.15s ease;
+}
+
+.ctrl-shutter-btn:active {
+  transform: scale(0.92);
+}
+
+.shutter-inner-ring {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--ivory);
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+/* Stages */
+.studio-weaving-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.studio-review-stage {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 16px 80px 16px;
+  box-sizing: border-box;
+  overflow-y: visible;
+}
+
+/* Viewfinder Placeholder Screen */
+.viewfinder-placeholder-screen {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, #251710 0%, #100a06 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.aperture-icon {
+  font-size: 3.5rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 16px rgba(200, 150, 62, 0.4));
+  animation: aperture-pulse 2s infinite ease-in-out;
+}
+
+.aperture-title {
+  font-family: var(--font-display, serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--honey, #E9C77B);
+  margin-bottom: 6px;
+}
+
+.aperture-sub {
+  font-family: var(--font-ui, sans-serif);
+  font-size: 0.8rem;
+  color: var(--muted-night, #B8A58A);
+  line-height: 1.4;
+  max-width: 260px;
+}
+
+@keyframes aperture-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mic-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 10px var(--gamosa); }
+  100% { transform: scale(1.1); box-shadow: 0 0 24px var(--gamosa); }
+}

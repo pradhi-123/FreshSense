@@ -1,0 +1,118 @@
+.splash-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 480px;
+  background-color: #060302;
+  background-image:
+    radial-gradient(ellipse at 50% 28%, #2d1506 0%, transparent 65%),
+    radial-gradient(circle at 50% 75%, #180903 0%, #040201 75%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+.splash-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: clamp(8px, 1.8vh, 20px);
+  text-align: center;
+  padding: clamp(28px, 6vh, 52px) 16px clamp(16px, 3vh, 32px);
+  width: 100%;
+  max-width: 580px;
+  height: 100%;
+  max-height: 820px;
+  transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+}
+
+/* Concentric Diya Ring Loader Centerpiece (Shifted higher to top) */
+.splash-loader-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: -30px;
+  margin-bottom: 6px;
+}
+
+/* 22 Bhashini Language Cycler Wrap (Below Circle with Larger Fonts) */
+.splash-bhashini-wrap {
+  width: 100%;
+  margin: 6px 0;
+}
+
+/* Clean Status Line */
+.splash-status-wrap {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.splash-status-line {
+  font-family: var(--font-body);
+  font-size: clamp(0.78rem, 2.5vw, 0.92rem);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber-300);
+  text-shadow: 0 0 18px rgba(245, 167, 66, 0.6);
+  animation: text-crossfade 0.5s ease-in-out;
+  white-space: nowrap;
+}
+
+/* Exit Transition Bloom Layer */
+.splash-exit-bloom {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(245, 167, 66, 0.95) 0%, rgba(224, 103, 43, 0.65) 45%, #120b07 100%);
+  opacity: 0;
+  transform: scale(0.5);
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.75s var(--ease-out), transform 0.75s var(--ease-out);
+}
+
+.splash-page.is-exiting .splash-exit-bloom {
+  opacity: 1;
+  transform: scale(1.75);
+}
+
+.splash-page.is-exiting .splash-content {
+  opacity: 0;
+  transform: scale(1.06);
+}
+
+@keyframes text-crossfade {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-height: 640px) {
+  .splash-content {
+    padding: 16px 6px 12px;
+    gap: 8px;
+  }
+  .splash-loader-wrap {
+    margin-top: -18px;
+  }
+}
+
+@media (max-width: 380px) {
+  .splash-content {
+    padding: 16px 6px 12px;
+    gap: 10px;
+  }
+}
