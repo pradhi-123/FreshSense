@@ -60,20 +60,41 @@ void setup() {
   Serial.println("FRESH_SENSE_HARDWARE_NODE_ONLINE");
 }
 
-float readTemperatureC() {
-  int rawADC = analogRead(PIN_THERMISTOR);
-  if (rawADC <= 10 || rawADC >= 1020) {
-    // If thermistor is not wired yet, return standard 24.5°C room ambient
-    return 24.5;
+float readTemperatureC(int &outRawADC) {
+  // Take 5-sample average for stability
+  long adcSum = 0;
+  for (int i = 0; i < 5; i++) {
+    adcSum += analogRead(PIN_THERMISTOR);
+    delay(5);
+  }
+  float rawADC = (float)adcSum / 5.0;
+  outRawADC = (int)rawADC;
+
+  // If pin A0 is completely open / floating (reads 0 or 1023)
+  if (rawADC <= 5.0 || rawADC >= 1020.0) {
+    return 24.5; // Baseline fallback when unplugged
   }
 
-  float resistance = SERIES_RESISTOR / (1023.0 / (float)rawADC - 1.0);
+  // Calculate NTC thermistor resistance (Standard Voltage Divider: 5V -> Thermistor -> A0 -> 10k -> GND)
+  float resistance = SERIES_RESISTOR * ((1023.0 / rawADC) - 1.0);
+  if (resistance <= 0) resistance = 1000.0;
+
+  // Steinhart-Hart equation
   float steinhart = resistance / NOMINAL_RESISTANCE;     // (R/Ro)
   steinhart = log(steinhart);                            // ln(R/Ro)
   steinhart /= B_COEFFICIENT;                            // 1/B * ln(R/Ro)
   steinhart += 1.0 / (NOMINAL_TEMPERATURE + 273.15);     // + (1/To)
   steinhart = 1.0 / steinhart;                           // Invert
   float tempC = steinhart - 273.15;                      // Convert to °C
+
+  // Fallback sanity check (if wired inversely or using LM35)
+  if (tempC < -10.0 || tempC > 85.0) {
+    // If LM35 was plugged into A0 (10mV/°C: 250mV = 25°C = ADC ~51)
+    float lm35Temp = (rawADC * 5.0 / 1024.0) * 100.0;
+    if (lm35Temp >= 0.0 && lm35Temp <= 60.0) {
+      return lm35Temp;
+    }
+  }
 
   return constrain(tempC, -10.0, 70.0);
 }
@@ -127,7 +148,8 @@ void readColorRGB(int &r, int &g, int &b) {
 
 void loop() {
   // 1. Read all sensors concurrently
-  float temp = readTemperatureC();
+  int rawADC_T = 0;
+  float temp = readTemperatureC(rawADC_T);
   float mq2PPM = readMQ2_PPM();
   float mq3PPM = readMQ3_PPM();
   
@@ -138,7 +160,7 @@ void loop() {
   readColorRGB(red, green, blue);
 
   // 2. Synchronized Output format:
-  // TEMP:24.5,MQ2:115,MQ3:82,GAS:98,RGB:76,175,80
+  // TEMP:24.5,MQ2:115,MQ3:82,GAS:98,RGB:76,175,80,RAW_T:512
   Serial.print("TEMP:");
   Serial.print(temp, 1);
   Serial.print(",MQ2:");
@@ -152,7 +174,9 @@ void loop() {
   Serial.print(",");
   Serial.print(green);
   Serial.print(",");
-  Serial.println(blue);
+  Serial.print(blue);
+  Serial.print(",RAW_T:");
+  Serial.println(rawADC_T);
 
   delay(1000); // 1-second continuous telemetry cadence
 }

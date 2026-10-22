@@ -615,9 +615,10 @@ Respond strictly in valid JSON:
 If completely unable to deduce any product, return {{"identified": false}}.
 """
         models = [
+            "gemini-3.5-flash",
             "gemini-3-flash-preview",
-            "gemini-3.1-flash-lite",
-            "gemini-flash-lite-latest",
+            "gemini-3.8-flash",
+            "gemini-flash-latest",
         ]
         raw_res = None
         for m in models:
@@ -1349,12 +1350,10 @@ Respond strictly in valid JSON matching this schema:
 }}
 """
         models = [
-            "gemini-2.5-flash",
-            "gemini-1.5-flash",
-            "gemini-2.0-flash",
+            "gemini-3.5-flash",
             "gemini-3-flash-preview",
-            "gemini-3.1-flash-lite",
-            "gemini-flash-lite-latest",
+            "gemini-3.8-flash",
+            "gemini-flash-latest",
         ]
         raw_res = None
         for m in models:
@@ -1518,9 +1517,10 @@ Respond strictly in valid JSON:
 }
 """
         models = [
+            "gemini-3.5-flash",
             "gemini-3-flash-preview",
-            "gemini-3.1-flash-lite",
-            "gemini-flash-lite-latest",
+            "gemini-3.8-flash",
+            "gemini-flash-latest",
         ]
         raw_res = None
         for m in models:

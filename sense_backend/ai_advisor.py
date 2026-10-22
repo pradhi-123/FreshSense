@@ -16,8 +16,11 @@ from dotenv import load_dotenv, find_dotenv
 from PIL import Image
 
 def _load_api_key() -> Optional[str]:
-    """Loads Gemini API key safely from environment."""
-    load_dotenv(find_dotenv(), override=True)
+    """Loads Gemini API key safely from environment or .env file."""
+    for p in ["D:/First_project_clgclub/.env", "D:/FreshSense/.env", find_dotenv()]:
+        if p and os.path.exists(p):
+            load_dotenv(p, override=True)
+            break
     api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     if api_key:
         api_key = api_key.strip().strip('"').strip("'")
@@ -177,21 +180,36 @@ def build_sensor_contributions(
         thermal_color = "#EF4444"
         thermal_impact = f"{temp_val:.1f}°C ambient significantly accelerates metabolic loss ({arrhenius_factor}× faster decay). Cool down quickly."
 
-    # Concurrent Weighted Synthesis: (30% Vision + 15% MQ-2 + 15% MQ-3 + 20% Color + 20% Temp)
-    fused_score = round(
-        (vision_score * 0.30) + 
-        (mq2_score * 0.15) + 
-        (mq3_score * 0.15) + 
-        (color_score * 0.20) + 
-        (thermal_score * 0.20),
-        1
+    # Weighted Multi-Sensor Synthesis:
+    # Optical Vision: 40% (Direct physical condition of the produce item)
+    # MQ-3 Ethanol Fermentation: 20% (Biochemical signature of sugar decay)
+    # MQ-2 Decomposition VOCs: 15% (Microbial respiration / putrefaction)
+    # Thermal Kinetics: 15% (Arrhenius storage rate acceleration)
+    # Optical Color: 10% (Surface pigment index)
+    # Total = 100%
+    weighted_score = (
+        (vision_score * 0.40) +
+        (mq3_score * 0.20) +
+        (mq2_score * 0.15) +
+        (thermal_score * 0.15) +
+        (color_score * 0.10)
     )
+
+    # Biological Law of the Minimum (Limiting Factor Anchoring):
+    # A visibly spotted/overripe fruit cannot be falsely labeled "Fresh" just because room air is clean!
+    if vision_score < 70.0:
+        fused_score = round(min(weighted_score, vision_score * 0.80 + weighted_score * 0.20), 1)
+    elif min(mq2_score, mq3_score) < 50.0:
+        # Severe gas accumulation overrides external visual appearance
+        fused_score = round(min(weighted_score, min(mq2_score, mq3_score)), 1)
+    else:
+        fused_score = round(weighted_score, 1)
 
     sensors_list = [
         {
             "sensor_name": "Optical Computer Vision",
             "sensor_type": "Multi-Spectral Vision AI",
-            "weight_pct": 30,
+            "weight_pct": 40,
             "score": vision_score,
             "status": vision_status,
             "status_color": vision_color,
@@ -199,6 +217,18 @@ def build_sensor_contributions(
             "contribution_impact": vision_impact,
             "icon": "Eye",
             "hardware_synced": True
+        },
+        {
+            "sensor_name": "MQ-3 Ethanol & Fermentation Sensor",
+            "sensor_type": "Alcohol / Sugar Fermentation Vapor Sensor",
+            "weight_pct": 20,
+            "score": mq3_score,
+            "status": mq3_status,
+            "status_color": mq3_color,
+            "raw_reading": f"{mq3_val:.0f} PPM ({'Physical USB Sensor' if is_hardware else 'Calibrated Simulation'})",
+            "contribution_impact": mq3_impact,
+            "icon": "Activity",
+            "hardware_synced": is_hardware
         },
         {
             "sensor_name": "MQ-2 Spoilage VOC Sensor",
@@ -213,39 +243,27 @@ def build_sensor_contributions(
             "hardware_synced": is_hardware
         },
         {
-            "sensor_name": "MQ-3 Ethanol & Fermentation Sensor",
-            "sensor_type": "Alcohol / Sugar Fermentation Vapor Sensor",
-            "weight_pct": 15,
-            "score": mq3_score,
-            "status": mq3_status,
-            "status_color": mq3_color,
-            "raw_reading": f"{mq3_val:.0f} PPM ({'Physical USB Sensor' if is_hardware else 'Calibrated Simulation'})",
-            "contribution_impact": mq3_impact,
-            "icon": "Activity",
-            "hardware_synced": is_hardware
-        },
-        {
-            "sensor_name": "RGB Spectral Color Sensor",
-            "sensor_type": "Optical Color Sensor (TCS3200 / TCS34725)",
-            "weight_pct": 20,
-            "score": color_score,
-            "status": color_status,
-            "status_color": color_badge_color,
-            "raw_reading": f"RGB({r}, {g}, {b}) • {hex_code} ({color_name})",
-            "contribution_impact": color_impact,
-            "icon": "Palette",
-            "hardware_synced": is_hardware
-        },
-        {
             "sensor_name": "Thermal Arrhenius Kinetic Sensor",
             "sensor_type": "Precision Temperature Probe (NTC Thermistor / DHT22)",
-            "weight_pct": 20,
+            "weight_pct": 15,
             "score": thermal_score,
             "status": thermal_status,
             "status_color": thermal_color,
             "raw_reading": f"{temp_val:.1f}°C (Q10 Respiration Rate: {arrhenius_factor}×)",
             "contribution_impact": thermal_impact,
             "icon": "Thermometer",
+            "hardware_synced": is_hardware
+        },
+        {
+            "sensor_name": "RGB Spectral Color Sensor",
+            "sensor_type": "Optical Color Sensor (TCS3200 / TCS34725)",
+            "weight_pct": 10,
+            "score": color_score,
+            "status": color_status,
+            "status_color": color_badge_color,
+            "raw_reading": f"RGB({r}, {g}, {b}) • {hex_code} ({color_name})",
+            "contribution_impact": color_impact,
+            "icon": "Palette",
             "hardware_synced": is_hardware
         }
     ]
@@ -455,12 +473,12 @@ Respond ONLY in valid JSON matching this schema:
 }}
 """
 
-            # Model priority: fastest/cheapest first, then fallback chain
+            # Model priority: active reliable models first
             models = [
-                "gemini-2.5-flash",
-                "gemini-1.5-flash",
-                "gemini-2.0-flash",
+                "gemini-flash-latest",
+                "gemini-3.5-flash",
                 "gemini-3-flash-preview",
+                "gemini-3.8-flash",
             ]
             for model_name in models:
                 try:
