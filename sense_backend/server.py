@@ -62,7 +62,7 @@ def health():
 # ---------------------------------------------------------
 @app.route("/api/sensors/current", methods=["GET"])
 def get_current_sensors():
-    """Returns current active telemetry (physical ESP32 if online, else simulation)."""
+    """Returns current active telemetry (physical ESP32/Arduino if online, else simulation)."""
     hw_data = esp32_hub.get_status_and_reading()
     hw_status = hw_data["status"]
 
@@ -75,9 +75,17 @@ def get_current_sensors():
             "temperature_c": reading["temperature_c"],
             "humidity_pct": reading["humidity_pct"],
             "gas_ppm": reading["gas_ppm"],
+            "mq2_ppm": reading.get("mq2_ppm", reading["gas_ppm"]),
+            "mq3_ppm": reading.get("mq3_ppm", reading["gas_ppm"]),
             "raw_gas_analog": reading.get("raw_gas_analog"),
+            "color_rgb": reading.get("color_rgb", {"r": 76, "g": 175, "b": 80}),
+            "color_hex": reading.get("color_hex", "#4CAF50"),
+            "color_name": reading.get("color_name", "Vibrant Chlorophyll Emerald"),
+            "browning_index": reading.get("browning_index", 12.0),
             "timestamp": reading["timestamp"],
             "device_name": hw_status["device_name"],
+            "concurrent_sensors": reading.get("concurrent_sensors", {}),
+            "gas_diagnostic_note": reading.get("gas_diagnostic_note"),
         })
     else:
         sim_read = sim_provider.get_current_reading()
@@ -88,19 +96,35 @@ def get_current_sensors():
             "temperature_c": sim_read.temperature_c,
             "humidity_pct": sim_read.humidity_pct,
             "gas_ppm": sim_read.gas_ppm,
+            "mq2_ppm": round(sim_read.gas_ppm * 1.05, 1),
+            "mq3_ppm": round(sim_read.gas_ppm * 0.95, 1),
             "raw_gas_analog": None,
+            "color_rgb": {"r": 76, "g": 175, "b": 80},
+            "color_hex": "#4CAF50",
+            "color_name": "Vibrant Chlorophyll Emerald",
+            "browning_index": 12.0,
             "timestamp": sim_read.timestamp.isoformat(),
             "device_name": sim_read.device_name,
+            "concurrent_sensors": {
+                "temperature": True,
+                "gas_mq2": True,
+                "gas_mq3": True,
+                "color_spectral": True,
+                "sync_state": "SIMULATED_BASELINE"
+            },
+            "gas_diagnostic_note": "Simulation Mode: Calibrated MQ-2 & MQ-3 baseline active.",
         })
 
 
 @app.route("/api/hardware/esp32/telemetry", methods=["POST"])
 def esp32_telemetry_post():
-    """Endpoint for ESP32 and Arduino USB multi-sensor concurrent telemetry push."""
+    """Endpoint for ESP32 and Arduino USB multi-sensor concurrent telemetry push (MQ-2, MQ-3, Thermistor, TCS3200)."""
     data = request.get_json(force=True, silent=True) or {}
     temp = data.get("temp", data.get("temperature", 24.0))
     hum = data.get("hum", data.get("humidity", 60.0))
     gas = data.get("gas", data.get("gas_ppm", 115.0))
+    mq2 = data.get("mq2", data.get("mq2_ppm", None))
+    mq3 = data.get("mq3", data.get("mq3_ppm", None))
     raw_gas = data.get("raw_gas", None)
     rssi = data.get("rssi", -60)
     device_name = data.get("device_name", "Arduino UNO Multi-Sensor Node")
@@ -119,6 +143,8 @@ def esp32_telemetry_post():
         temperature_c=temp,
         humidity_pct=hum,
         gas_ppm=gas,
+        mq2_ppm=mq2,
+        mq3_ppm=mq3,
         ip_address=client_ip,
         rssi_dbm=rssi,
         raw_gas_analog=raw_gas,
@@ -227,6 +253,21 @@ def analyze_fresh_image():
         return jsonify({"error": "No image provided. Please upload an image file or provide image_base64."}), 400
 
     # 2. Get active telemetry
+    body = request.get_json(silent=True) if request.is_json else {}
+    if not body and request.form:
+        body = request.form.to_dict()
+
+    scan_stats = None
+    if body and "scan_stats" in body:
+        raw_stats = body["scan_stats"]
+        if isinstance(raw_stats, str):
+            try:
+                scan_stats = json.loads(raw_stats)
+            except Exception:
+                scan_stats = None
+        elif isinstance(raw_stats, dict):
+            scan_stats = raw_stats
+
     hw_data = esp32_hub.get_status_and_reading()
     is_hw = hw_data["status"]["is_connected"] and hw_data["reading"] is not None
     if is_hw:
@@ -234,6 +275,8 @@ def analyze_fresh_image():
         temp = r["temperature_c"]
         humidity = r["humidity_pct"]
         gas = r["gas_ppm"]
+        mq2_val = r.get("mq2_ppm", gas)
+        mq3_val = r.get("mq3_ppm", gas)
         color_info = {
             "r": r.get("color_rgb", {}).get("r", 76),
             "g": r.get("color_rgb", {}).get("g", 175),
@@ -247,6 +290,8 @@ def analyze_fresh_image():
         temp = sim_read.temperature_c
         humidity = sim_read.humidity_pct
         gas = sim_read.gas_ppm
+        mq2_val = round(gas * 1.05, 1)
+        mq3_val = round(gas * 0.95, 1)
         color_info = {
             "r": 76,
             "g": 175,
@@ -256,32 +301,49 @@ def analyze_fresh_image():
             "browning_index": 12.0
         }
 
-    # 3. Multimodal Multi-Sensor Analysis (Vision + Gas + Color + Arrhenius Kinetics)
+    # Override with scan stats if provided from 30s client scan
+    if scan_stats:
+        if "avg_temp" in scan_stats:
+            temp = float(scan_stats["avg_temp"])
+        if "avg_mq2" in scan_stats:
+            mq2_val = float(scan_stats["avg_mq2"])
+        if "avg_mq3" in scan_stats:
+            mq3_val = float(scan_stats["avg_mq3"])
+        gas = round((mq2_val * 0.45) + (mq3_val * 0.55), 1)
+
+    # 3. Multimodal Multi-Sensor Analysis (Vision + MQ-2 + MQ-3 + Color + Arrhenius Kinetics)
     assessment = analyze_fresh_food(
         image_bytes=image_bytes,
         temp=temp,
         humidity=humidity,
         gas_ppm=gas,
         sensor_is_hardware=is_hw,
-        color_data=color_info
+        color_data=color_info,
+        mq2_ppm=mq2_val,
+        mq3_ppm=mq3_val,
+        scan_data=scan_stats
     )
 
     assessment["telemetry"] = {
         "temperature_c": temp,
         "humidity_pct": humidity,
         "gas_ppm": gas,
+        "mq2_ppm": mq2_val,
+        "mq3_ppm": mq3_val,
         "color_rgb": {"r": color_info["r"], "g": color_info["g"], "b": color_info["b"]},
         "color_hex": color_info["hex"],
         "color_name": color_info["color_name"],
         "browning_index": color_info["browning_index"],
         "is_hardware": is_hw,
-        "source": "Arduino UNO / ESP32 Sensor Array" if is_hw else "Sense AI Simulation",
+        "source": "Arduino UNO Sensor Array (MQ-2 + MQ-3 + TCS)" if is_hw else "Sense AI Simulation",
         "concurrent_sensors": {
             "camera_vision": True,
             "temperature_arrhenius": True,
-            "gas_mq135": True,
+            "gas_mq2": True,
+            "gas_mq3": True,
             "color_tcs": True
-        }
+        },
+        "scan_stats": scan_stats
     }
 
     # 4. Generate 48h decay timeline

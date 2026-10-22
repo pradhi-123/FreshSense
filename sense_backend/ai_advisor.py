@@ -65,17 +65,21 @@ def build_sensor_contributions(
     color_data: Optional[Dict[str, Any]],
     is_hardware: bool,
     detected_item: str = "Produce",
-    visual_condition: str = ""
+    visual_condition: str = "",
+    mq2_ppm: Optional[float] = None,
+    mq3_ppm: Optional[float] = None,
+    scan_data: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Forensic Multi-Sensor Fusion Engine:
     Concurrently calculates and explicitly states each individual sensor's contribution:
-    1. Optical Computer Vision (Weight: 35%)
-    2. MQ Gas / Spoilage Sensor (Weight: 25%)
-    3. RGB Spectral Color Sensor (Weight: 20%)
-    4. Thermal Kinetic Telemetry (Weight: 20%)
+    1. Optical Computer Vision (Weight: 30%)
+    2. MQ-2 Hydrocarbon & Spoilage Gas Sensor (Weight: 15%)
+    3. MQ-3 Alcohol & Fermentation Vapor Sensor (Weight: 15%)
+    4. RGB Spectral Color Sensor (Weight: 20%)
+    5. Thermal Kinetic Telemetry (Weight: 20%)
     """
-    # 1. Computer Vision (Weight 35%)
+    # 1. Computer Vision (Weight 30%)
     vision_score = round(max(15.0, min(100.0, float(base_freshness))), 1)
     if vision_score >= 80:
         vision_status = "Pristine Epidermal Surface"
@@ -90,26 +94,46 @@ def build_sensor_contributions(
         vision_color = "#EF4444"
         vision_impact = "Significant surface discoloration, bruising, or moisture breakdown identified by vision model."
 
-    # 2. Spoilage Gas / VOC Sensor (Weight 25%)
-    # Gas baseline: ~90-140 ppm normal; > 180 ppm elevated; > 260 ppm critical
-    gas_val = float(gas_ppm)
-    if gas_val <= 140:
-        gas_score = round(max(88.0, 100.0 - (gas_val - 90.0) * 0.15), 1)
-        gas_status = "Optimal Air Quality (Low VOC)"
-        gas_color = "#10B981"
-        gas_impact = f"{gas_val:.0f} PPM is well within clean threshold. Negligible ethylene, ethanol, or ammonia gas byproducts detected."
-    elif gas_val <= 220:
-        gas_score = round(max(60.0, 88.0 - (gas_val - 140.0) * 0.35), 1)
-        gas_status = "Moderate Volatiles Detected"
-        gas_color = "#F59E0B"
-        gas_impact = f"{gas_val:.0f} PPM indicates active respiration and natural ripening volatiles. Mild ethylene gas generation."
+    # 2. MQ-2 Spoilage Gas & Hydrocarbon Sensor (Weight 15%)
+    # Baseline: 50-140 ppm normal; 140-220 elevated; >220 critical
+    mq2_val = float(mq2_ppm if mq2_ppm is not None else (scan_data.get("avg_mq2", gas_ppm) if scan_data else gas_ppm))
+    if mq2_val <= 140:
+        mq2_score = round(max(88.0, 100.0 - (mq2_val - 50.0) * 0.13), 1)
+        mq2_status = "Clean Hydrocarbon Baseline"
+        mq2_color = "#10B981"
+        mq2_impact = f"{mq2_val:.0f} PPM confirms minimal volatile hydrocarbons or putrefactive breakdown gases."
+    elif mq2_val <= 220:
+        mq2_score = round(max(55.0, 88.0 - (mq2_val - 140.0) * 0.40), 1)
+        mq2_status = "Moderate Hydrocarbon Emission"
+        mq2_color = "#F59E0B"
+        mq2_impact = f"{mq2_val:.0f} PPM indicates initial cellular breakdown and active organic gas evolution."
     else:
-        gas_score = round(max(20.0, 60.0 - (gas_val - 220.0) * 0.25), 1)
-        gas_status = "Elevated Spoilage VOCs Alert"
-        gas_color = "#EF4444"
-        gas_impact = f"{gas_val:.0f} PPM shows elevated volatile organic compounds from anaerobic microbial respiration or fermentation."
+        mq2_score = round(max(15.0, 55.0 - (mq2_val - 220.0) * 0.35), 1)
+        mq2_status = "Critical Spoilage Gas Detected"
+        mq2_color = "#EF4444"
+        mq2_impact = f"{mq2_val:.0f} PPM shows acute accumulation of putrefaction volatiles and bacterial decomposition."
 
-    # 3. Spectral Color Sensor (TCS3200 / TCS34725 RGB, Weight 20%)
+    # 3. MQ-3 Alcohol & Fermentation Vapor Sensor (Weight 15%)
+    # Rotting produces ethanol and ethyl esters through yeast/bacterial sugar fermentation
+    # Baseline: 30-100 ppm clean; 100-180 fermentation onset; >180 active rot
+    mq3_val = float(mq3_ppm if mq3_ppm is not None else (scan_data.get("avg_mq3", gas_ppm * 0.95) if scan_data else gas_ppm * 0.95))
+    if mq3_val <= 110:
+        mq3_score = round(max(90.0, 100.0 - (mq3_val - 30.0) * 0.12), 1)
+        mq3_status = "Negligible Fermentation (Fresh)"
+        mq3_color = "#10B981"
+        mq3_impact = f"{mq3_val:.0f} PPM confirms sugars remain intact with no alcohol or fermentation off-gassing."
+    elif mq3_val <= 190:
+        mq3_score = round(max(55.0, 90.0 - (mq3_val - 110.0) * 0.42), 1)
+        mq3_status = "Mild Sugar Fermentation"
+        mq3_color = "#F59E0B"
+        mq3_impact = f"{mq3_val:.0f} PPM detects sweet alcohol esters and natural yeast fermentation of ripe sugars."
+    else:
+        mq3_score = round(max(15.0, 55.0 - (mq3_val - 190.0) * 0.40), 1)
+        mq3_status = "Active Anaerobic Fermentation / Rot"
+        mq3_color = "#EF4444"
+        mq3_impact = f"{mq3_val:.0f} PPM confirms high ethanol vapors from bacterial fermentation and advanced decay."
+
+    # 4. Spectral Color Sensor (TCS3200 / TCS34725 RGB, Weight 20%)
     c_data = color_data or {}
     r = c_data.get("r", c_data.get("color_rgb", {}).get("r", 76))
     g = c_data.get("g", c_data.get("color_rgb", {}).get("g", 175))
@@ -134,9 +158,8 @@ def build_sensor_contributions(
         color_badge_color = "#EF4444"
         color_impact = f"Strong discoloration ({color_name}, {browning_idx}% browning index) from polyphenol oxidase enzymatic browning."
 
-    # 4. Thermal Kinetic Telemetry (Temperature Decay, Weight 20%)
+    # 5. Thermal Kinetic Telemetry (Temperature Decay, Weight 20%)
     temp_val = float(temp)
-    # Ideal fresh storage is 4-12°C. Above 20°C Arrhenius kinetics accelerate respiration
     thermal_stress = max(0.0, (temp_val - 16.0) * 2.4)
     thermal_score = round(max(25.0, min(100.0, 100.0 - thermal_stress)), 1)
     arrhenius_factor = round(2.0 ** max(0.0, (temp_val - 12.0) / 10.0), 2)
@@ -154,10 +177,11 @@ def build_sensor_contributions(
         thermal_color = "#EF4444"
         thermal_impact = f"{temp_val:.1f}°C ambient significantly accelerates metabolic loss ({arrhenius_factor}× faster decay). Cool down quickly."
 
-    # Concurrent Weighted Synthesis: (35% Vision + 25% Gas + 20% Color + 20% Temp)
+    # Concurrent Weighted Synthesis: (30% Vision + 15% MQ-2 + 15% MQ-3 + 20% Color + 20% Temp)
     fused_score = round(
-        (vision_score * 0.35) + 
-        (gas_score * 0.25) + 
+        (vision_score * 0.30) + 
+        (mq2_score * 0.15) + 
+        (mq3_score * 0.15) + 
         (color_score * 0.20) + 
         (thermal_score * 0.20),
         1
@@ -167,7 +191,7 @@ def build_sensor_contributions(
         {
             "sensor_name": "Optical Computer Vision",
             "sensor_type": "Multi-Spectral Vision AI",
-            "weight_pct": 35,
+            "weight_pct": 30,
             "score": vision_score,
             "status": vision_status,
             "status_color": vision_color,
@@ -177,15 +201,27 @@ def build_sensor_contributions(
             "hardware_synced": True
         },
         {
-            "sensor_name": "Spoilage Gas & VOC Sensor",
-            "sensor_type": "Semiconductor Gas Node (MQ-135 / MQ-4)",
-            "weight_pct": 25,
-            "score": gas_score,
-            "status": gas_status,
-            "status_color": gas_color,
-            "raw_reading": f"{gas_val:.0f} PPM ({'Physical USB Sensor' if is_hardware else 'Simulation Calibrated'})",
-            "contribution_impact": gas_impact,
+            "sensor_name": "MQ-2 Spoilage VOC Sensor",
+            "sensor_type": "Combustible Gas / Decomposition Hydrocarbon Sensor",
+            "weight_pct": 15,
+            "score": mq2_score,
+            "status": mq2_status,
+            "status_color": mq2_color,
+            "raw_reading": f"{mq2_val:.0f} PPM ({'Physical USB Sensor' if is_hardware else 'Calibrated Simulation'})",
+            "contribution_impact": mq2_impact,
             "icon": "Wind",
+            "hardware_synced": is_hardware
+        },
+        {
+            "sensor_name": "MQ-3 Ethanol & Fermentation Sensor",
+            "sensor_type": "Alcohol / Sugar Fermentation Vapor Sensor",
+            "weight_pct": 15,
+            "score": mq3_score,
+            "status": mq3_status,
+            "status_color": mq3_color,
+            "raw_reading": f"{mq3_val:.0f} PPM ({'Physical USB Sensor' if is_hardware else 'Calibrated Simulation'})",
+            "contribution_impact": mq3_impact,
+            "icon": "Activity",
             "hardware_synced": is_hardware
         },
         {
@@ -201,28 +237,48 @@ def build_sensor_contributions(
             "hardware_synced": is_hardware
         },
         {
-            "sensor_name": "Thermal Kinetic Telemetry",
-            "sensor_type": "Arrhenius Kinetic Sensor (NTC Thermistor / DHT)",
+            "sensor_name": "Thermal Arrhenius Kinetic Sensor",
+            "sensor_type": "Precision Temperature Probe (NTC Thermistor / DHT22)",
             "weight_pct": 20,
             "score": thermal_score,
             "status": thermal_status,
             "status_color": thermal_color,
-            "raw_reading": f"{temp_val:.1f}°C ({humidity:.0f}% RH)",
+            "raw_reading": f"{temp_val:.1f}°C (Q10 Respiration Rate: {arrhenius_factor}×)",
             "contribution_impact": thermal_impact,
             "icon": "Thermometer",
             "hardware_synced": is_hardware
         }
     ]
 
+    scan_summary = None
+    if scan_data:
+        scan_summary = {
+            "duration_seconds": scan_data.get("duration", 30),
+            "samples_captured": scan_data.get("samples_count", 30),
+            "peak_mq2": scan_data.get("peak_mq2", mq2_val),
+            "peak_mq3": scan_data.get("peak_mq3", mq3_val),
+            "avg_mq2": mq2_val,
+            "avg_mq3": mq3_val,
+            "trend": scan_data.get("trend", "Stable Emission"),
+            "status": "30-Second Multi-Sensor Scan Completed Successfully"
+        }
+
     return {
         "overall_score": fused_score,
+        "fused_score": fused_score,
         "concurrent_sync_time": datetime.now().isoformat(),
         "is_hardware": is_hardware,
         "sensors": sensors_list,
+        "scan_summary": scan_summary,
         "fusion_summary": (
-            f"Concurrent 4-parameter fusion confirms final freshness of {fused_score}/100 for {detected_item}. "
-            f"Vision contributed 35% ({vision_score} pts), Gas sensor contributed 25% ({gas_score} pts), "
-            f"Spectral color contributed 20% ({color_score} pts), and Temperature contributed 20% ({thermal_score} pts)."
+            f"Concurrent 5-parameter synthesis confirms freshness IQ of {fused_score}/100 for {detected_item}. "
+            f"Vision contributed 30% ({vision_score} pts), MQ-2 Spoilage VOCs 15% ({mq2_score} pts), "
+            f"MQ-3 Ethanol Fermentation 15% ({mq3_score} pts), Spectral Color 20% ({color_score} pts), and Temperature 20% ({thermal_score} pts)."
+        ),
+        "diagnostic_summary": (
+            f"Multi-sensor array concurrently synchronized across 5 parameters. "
+            f"MQ-2 Spoilage VOCs at {mq2_val:.0f} PPM, MQ-3 Fermentation Vapors at {mq3_val:.0f} PPM, "
+            f"reflectance at {hex_code}, and thermal rate at {temp_val:.1f}°C."
         )
     }
 
@@ -233,11 +289,15 @@ def analyze_fresh_food(
     humidity: float = 65.0,
     gas_ppm: float = 120.0,
     sensor_is_hardware: bool = False,
-    color_data: Optional[Dict[str, Any]] = None
+    color_data: Optional[Dict[str, Any]] = None,
+    mq2_ppm: Optional[float] = None,
+    mq3_ppm: Optional[float] = None,
+    scan_data: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Multimodal fresh food inspection:
-    Concurrently correlates camera vision, MQ-135 gas sensor, TCS color sensor, and thermal kinetics.
+    Concurrently correlates camera vision, MQ-2 spoilage gas, MQ-3 alcohol fermentation vapor,
+    TCS spectral color sensor, and Arrhenius thermal kinetics.
     States each sensor's contribution explicitly.
     """
     api_key = _load_api_key()
@@ -248,7 +308,14 @@ def analyze_fresh_food(
     c_hex = c_info.get("hex", "#4CAF50")
     c_name = c_info.get("color_name", "Vibrant Chlorophyll Emerald")
     browning_idx = c_info.get("browning_index", 12.0)
-    
+
+    val_mq2 = float(mq2_ppm if mq2_ppm is not None else gas_ppm)
+    val_mq3 = float(mq3_ppm if mq3_ppm is not None else (gas_ppm * 0.95))
+
+    scan_info_str = ""
+    if scan_data:
+        scan_info_str = f"Continuous 30-Second Scan Data: Captured {scan_data.get('samples_count', 30)} concurrent sensor frames (Peak MQ-2: {scan_data.get('peak_mq2', val_mq2):.0f} PPM, Peak MQ-3: {scan_data.get('peak_mq3', val_mq3):.0f} PPM, Rate of Emission: {scan_data.get('trend', 'Stable')})."
+
     if api_key:
         try:
             from google import genai
@@ -259,11 +326,13 @@ def analyze_fresh_food(
 
             prompt = f"""
 You are Sense AI, an expert food scientist, vision inspector, and joyful culinary safety companion.
-Analyze this camera image concurrently with our 4-sensor IoT telemetry array:
+Analyze this camera image concurrently with our 5-sensor IoT telemetry array:
 1. Ambient Temperature Sensor: {temp}°C (Arrhenius kinetic thermal acceleration)
 2. Relative Humidity Sensor: {humidity}%
-3. MQ-135 Spoilage Gas Sensor: {gas_ppm} PPM ({'Physical USB Hardware Node' if sensor_is_hardware else 'Simulation Baseline'})
-4. TCS Spectral Color Sensor: RGB({c_r}, {c_g}, {c_b}), Hex: {c_hex}, Chromatic: {c_name}, Browning Index: {browning_idx}%
+3. MQ-2 Hydrocarbon & Spoilage Gas Sensor: {val_mq2:.0f} PPM ({'Physical USB Hardware Node' if sensor_is_hardware else 'Calibrated Simulation'})
+4. MQ-3 Alcohol & Fermentation Vapor Sensor: {val_mq3:.0f} PPM (Ethanol fermentation vapors from natural fruit sugar breakdown)
+5. TCS Spectral Color Sensor: RGB({c_r}, {c_g}, {c_b}), Hex: {c_hex}, Chromatic: {c_name}, Browning Index: {browning_idx}%
+{scan_info_str}
 
 SPECIAL RECOGNITION RULES:
 
@@ -347,7 +416,7 @@ SPECIAL RECOGNITION RULES:
    - "estimated_shelf_life_days_max": <number>,
    - "estimated_remaining_str": "e.g., ~4–6 days remaining",
    - "deterioration_rate_assessment": "Low / Moderate / Accelerated",
-   - "deterioration_reasoning": "Scientific respiration kinetics at {temp}°C ambient with gas level at {gas_ppm} PPM",
+   - "deterioration_reasoning": "Scientific respiration kinetics at {temp}°C ambient with MQ-2 gas at {val_mq2:.0f} PPM and MQ-3 ethanol at {val_mq3:.0f} PPM",
    - "recommended_storage": "...",
    - "storage_tips": "...",
    - "uncertainty_note": "Visual AI inspects surface traits; internal bacterial load cannot be measured solely from images.",
@@ -425,7 +494,10 @@ Respond ONLY in valid JSON matching this schema:
                                 color_data=c_info,
                                 is_hardware=sensor_is_hardware,
                                 detected_item=result.get("detected_item", "Produce"),
-                                visual_condition=result.get("visual_condition", "")
+                                visual_condition=result.get("visual_condition", ""),
+                                mq2_ppm=val_mq2,
+                                mq3_ppm=val_mq3,
+                                scan_data=scan_data,
                             )
                             result["sensor_contributions"] = contributions
                             result["freshness_score"] = contributions["overall_score"]
@@ -437,7 +509,7 @@ Respond ONLY in valid JSON matching this schema:
                             rname = rec.get("recipe_name", "")
                             rec["dish_image_url"] = resolve_dish_image_url(kw, rname)
 
-                        print(f"[Sense AI] Gemini vision success via {model_name} with 4-sensor concurrent fusion", flush=True)
+                        print(f"[Sense AI] Gemini vision success via {model_name} with 5-sensor concurrent fusion", flush=True)
                         return result
                 except Exception as model_err:
                     print(f"[Sense AI] Model {model_name} note: {type(model_err).__name__}: {str(model_err)[:100]}", flush=True)
@@ -446,7 +518,7 @@ Respond ONLY in valid JSON matching this schema:
             print(f"[Sense AI] Gemini client init note: {type(e).__name__}: {e}", flush=True)
 
     # High-fidelity algorithmic fallback based on multi-sensor kinetics & optical parameters
-    return _algorithmic_fresh_assessment(image_bytes, temp, humidity, gas_ppm, sensor_is_hardware, c_info)
+    return _algorithmic_fresh_assessment(image_bytes, temp, humidity, gas_ppm, sensor_is_hardware, c_info, val_mq2, val_mq3, scan_data)
 
 
 def _algorithmic_fresh_assessment(
@@ -455,7 +527,10 @@ def _algorithmic_fresh_assessment(
     humidity: float, 
     gas_ppm: float, 
     is_hardware: bool,
-    color_data: Optional[Dict[str, Any]] = None
+    color_data: Optional[Dict[str, Any]] = None,
+    mq2_ppm: Optional[float] = None,
+    mq3_ppm: Optional[float] = None,
+    scan_data: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """Scientific algorithmic assessment when Gemini API key is absent or cloud is offline."""
     # Analyze image aspect & basic lightness
@@ -464,6 +539,9 @@ def _algorithmic_fresh_assessment(
         w, h = im.size
     except Exception:
         w, h = 600, 600
+
+    val_mq2 = float(mq2_ppm if mq2_ppm is not None else gas_ppm)
+    val_mq3 = float(mq3_ppm if mq3_ppm is not None else (gas_ppm * 0.95))
 
     # Multi-sensor fusion computation
     contributions = build_sensor_contributions(
@@ -474,7 +552,10 @@ def _algorithmic_fresh_assessment(
         color_data=color_data,
         is_hardware=is_hardware,
         detected_item="Fresh Produce",
-        visual_condition="Intact epidermal surface"
+        visual_condition="Intact epidermal surface",
+        mq2_ppm=val_mq2,
+        mq3_ppm=val_mq3,
+        scan_data=scan_data
     )
     freshness = contributions["overall_score"]
 

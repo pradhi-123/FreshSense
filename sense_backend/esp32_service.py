@@ -60,6 +60,8 @@ class ESP32HardwareHub:
         ip_address: Optional[str] = None,
         rssi_dbm: int = -60,
         raw_gas_analog: Optional[int] = None,
+        mq2_ppm: Optional[float] = None,
+        mq3_ppm: Optional[float] = None,
         color_r: Optional[int] = None,
         color_g: Optional[int] = None,
         color_b: Optional[int] = None,
@@ -76,37 +78,44 @@ class ESP32HardwareHub:
             if device_name:
                 self.status.device_name = device_name
             self.status.rssi_dbm = rssi_dbm
-            self.status.message = "Multi-Sensor Hardware Online & Transmitting"
+            self.status.message = "Multi-Sensor Hardware Online & Transmitting (MQ-2 + MQ-3 Array)"
+
+            # Fallback calculations if mq2 / mq3 not separately supplied
+            g_val = float(gas_ppm)
+            val_mq2 = round(float(mq2_ppm), 1) if mq2_ppm is not None else round(g_val * 1.05, 1)
+            val_mq3 = round(float(mq3_ppm), 1) if mq3_ppm is not None else round(g_val * 0.95, 1)
 
             # Parse / normalize color sensor inputs (TCS3200 / TCS34725 RGB)
             r_val = int(color_r) if color_r is not None else 76
-            g_val = int(color_g) if color_g is not None else 175
+            g_val_rgb = int(color_g) if color_g is not None else 175
             b_val = int(color_b) if color_b is not None else 80
-            hex_str = color_hex or f"#{r_val:02x}{g_val:02x}{b_val:02x}".upper()
+            hex_str = color_hex or f"#{r_val:02x}{g_val_rgb:02x}{b_val:02x}".upper()
 
             # Dynamic chromatic classification for fresh produce
             c_label = color_name
             if not c_label:
-                if g_val > r_val + 20 and g_val > b_val:
+                if g_val_rgb > r_val + 20 and g_val_rgb > b_val:
                     c_label = "Vibrant Chlorophyll Emerald"
-                elif r_val > 180 and g_val > 140 and b_val < 90:
+                elif r_val > 180 and g_val_rgb > 140 and b_val < 90:
                     c_label = "Sun-Ripened Golden Yellow"
-                elif r_val > 170 and g_val < 90 and b_val < 90:
+                elif r_val > 170 and g_val_rgb < 90 and b_val < 90:
                     c_label = "Lycopene Crimson Red"
-                elif r_val > 110 and g_val < 80 and b_val < 60:
+                elif r_val > 110 and g_val_rgb < 80 and b_val < 60:
                     c_label = "Oxidized Browning Pigment"
                 else:
                     c_label = "Balanced Spectral RGB"
 
             # Enzymatic browning index (higher ratio of red/brown to green indicates oxidation)
-            browning_idx = round(max(0.0, min(100.0, ((r_val - g_val + 100) / 200.0) * 100.0)), 1)
+            browning_idx = round(max(0.0, min(100.0, ((r_val - g_val_rgb + 100) / 200.0) * 100.0)), 1)
 
             reading = {
                 "temperature_c": round(float(temperature_c), 1),
                 "humidity_pct": round(float(humidity_pct), 1),
-                "gas_ppm": round(float(gas_ppm), 1),
+                "gas_ppm": round(g_val, 1),
+                "mq2_ppm": val_mq2,
+                "mq3_ppm": val_mq3,
                 "raw_gas_analog": raw_gas_analog,
-                "color_rgb": {"r": r_val, "g": g_val, "b": b_val},
+                "color_rgb": {"r": r_val, "g": g_val_rgb, "b": b_val},
                 "color_hex": hex_str,
                 "color_name": c_label,
                 "browning_index": browning_idx,
@@ -116,12 +125,13 @@ class ESP32HardwareHub:
                 "rssi_dbm": rssi_dbm,
                 "concurrent_sensors": {
                     "temperature": True,
-                    "gas_mq135": True,
+                    "gas_mq2": True,
+                    "gas_mq3": True,
                     "color_spectral": True,
                     "sync_state": "CONCURRENT_ACTIVE"
                 },
                 "gas_diagnostic_note": (
-                    "MQ-135 Spoilage & VOC Sensor Online. Real-time organic volatile gas tracking."
+                    f"MQ-2 Spoilage VOC ({val_mq2:.0f} PPM) & MQ-3 Ethanol Fermentation ({val_mq3:.0f} PPM) active."
                 ),
                 "color_diagnostic_note": (
                     f"TCS Spectral Sensor Online: {c_label} ({hex_str}). Surface browning index: {browning_idx}%."

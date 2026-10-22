@@ -22,10 +22,13 @@ export async function fetchFreshCatalog() {
   return res.json();
 }
 
-export async function analyzeFreshFoodImage(imageBase64, file = null) {
+export async function analyzeFreshFoodImage(imageBase64, file = null, scanStats = null) {
   if (file) {
     const formData = new FormData();
     formData.append('image', file);
+    if (scanStats) {
+      formData.append('scan_stats', JSON.stringify(scanStats));
+    }
     const res = await fetch(`${API_BASE}/fresh/analyze-image`, {
       method: 'POST',
       body: formData,
@@ -36,7 +39,10 @@ export async function analyzeFreshFoodImage(imageBase64, file = null) {
   const res = await fetch(`${API_BASE}/fresh/analyze-image`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image_base64: imageBase64 }),
+    body: JSON.stringify({ 
+      image_base64: imageBase64,
+      scan_stats: scanStats
+    }),
   });
   return res.json();
 }

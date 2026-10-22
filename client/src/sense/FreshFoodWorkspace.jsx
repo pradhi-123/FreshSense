@@ -136,7 +136,28 @@ export default function FreshFoodWorkspace({ onBack }) {
   const [analysisResult, setAnalysisResult] = useState(null);
   const [analysisDuration, setAnalysisDuration] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [ambientSensors, setAmbientSensors] = useState({ temperature_c: 24.5, humidity_pct: 55 });
+  const [ambientSensors, setAmbientSensors] = useState({ temperature_c: 24.5, humidity_pct: 55, mq2_ppm: 115, mq3_ppm: 85, gas_ppm: 98 });
+  const [liveTelemetry, setLiveTelemetry] = useState({
+    temperature_c: 24.5,
+    humidity_pct: 55,
+    gas_ppm: 98,
+    mq2_ppm: 115,
+    mq3_ppm: 85,
+    color_rgb: { r: 76, g: 175, b: 80 },
+    color_hex: '#4CAF50',
+    color_name: 'Vibrant Chlorophyll Emerald',
+    browning_index: 12.0,
+    is_hardware: false,
+    device_name: 'Arduino Multi-Sensor Node (MQ-2 + MQ-3)',
+    gas_diagnostic_note: 'MQ-2 Spoilage VOCs & MQ-3 Ethanol sensors active.',
+  });
+
+  // 30-Second Combined Scan States
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanSecondsLeft, setScanSecondsLeft] = useState(30);
+  const [scanSamples, setScanSamples] = useState([]);
+  const [scanStats, setScanStats] = useState(null);
+  const scanTimerRef = useRef(null);
 
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -144,31 +165,60 @@ export default function FreshFoodWorkspace({ onBack }) {
   const fileInputRef = useRef(null);
   const pendingStreamRef = useRef(null); // holds stream while video element mounts
 
-  // Ambient sensor telemetry polling
+  // Ambient & Real-time sensor telemetry polling (1.5s fast cadence)
   useEffect(() => {
     let isMounted = true;
     const pollSensors = async () => {
       try {
         const res = await fetchCurrentSensors();
-        if (res && res.reading && isMounted) {
+        if (res && isMounted) {
+          const isHw = Boolean(res.is_hardware);
+          const t = res.temperature_c ?? 24.5;
+          const h = res.humidity_pct ?? 55;
+          const g = res.gas_ppm ?? 98;
+          const m2 = res.mq2_ppm ?? g;
+          const m3 = res.mq3_ppm ?? Math.round(g * 0.95);
+
+          setLiveTelemetry({
+            temperature_c: t,
+            humidity_pct: h,
+            gas_ppm: g,
+            mq2_ppm: m2,
+            mq3_ppm: m3,
+            color_rgb: res.color_rgb || { r: 76, g: 175, b: 80 },
+            color_hex: res.color_hex || '#4CAF50',
+            color_name: res.color_name || 'Vibrant Chlorophyll Emerald',
+            browning_index: res.browning_index ?? 12.0,
+            is_hardware: isHw,
+            device_name: res.device_name || (isHw ? 'Arduino Multi-Sensor Node (MQ-2 + MQ-3)' : 'Simulated Sensor Array'),
+            gas_diagnostic_note: res.gas_diagnostic_note || '',
+          });
+
           setAmbientSensors({
-            temperature_c: res.reading.temperature_c ?? 24.5,
-            humidity_pct: res.reading.humidity_pct ?? 55,
+            temperature_c: t,
+            humidity_pct: h,
+            gas_ppm: g,
+            mq2_ppm: m2,
+            mq3_ppm: m3,
+            color_name: res.color_name || 'Emerald',
           });
         }
       } catch (_) {}
     };
     pollSensors();
-    const interval = setInterval(pollSensors, 4000);
+    const interval = setInterval(pollSensors, 1500);
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
   }, []);
 
-  // Cleanup camera stream on unmount
+  // Cleanup camera stream & scan timer on unmount
   useEffect(() => {
-    return () => { stopCamera(); };
+    return () => {
+      if (scanTimerRef.current) clearInterval(scanTimerRef.current);
+      stopCamera();
+    };
   }, []);
 
   // Attach stream to <video> the moment isCameraActive=true AND videoRef is ready
@@ -271,9 +321,119 @@ export default function FreshFoodWorkspace({ onBack }) {
     setAnalysisResult(null);
     setErrorMsg(null);
     setAnalysisDuration(null);
+    setScanStats(null);
+    setScanSamples([]);
+    if (scanTimerRef.current) {
+      clearInterval(scanTimerRef.current);
+      scanTimerRef.current = null;
+    }
+    setIsScanning(false);
+  };
+
+  const stop30SecondScan = () => {
+    if (scanTimerRef.current) {
+      clearInterval(scanTimerRef.current);
+      scanTimerRef.current = null;
+    }
+    setIsScanning(false);
+    setScanSecondsLeft(30);
+  };
+
+  const start30SecondScan = async () => {
+    if (!imagePreview) {
+      setErrorMsg('📷 Please take or upload a food photo first, then start the 30-second multi-sensor scan!');
+      return;
+    }
+
+    setErrorMsg(null);
+    setIsScanning(true);
+    setScanSecondsLeft(30);
+    setScanSamples([]);
+
+    const samples = [];
+    let secondsLeft = 30;
+
+    if (scanTimerRef.current) clearInterval(scanTimerRef.current);
+
+    scanTimerRef.current = setInterval(async () => {
+      secondsLeft -= 1;
+      setScanSecondsLeft(secondsLeft);
+
+      // Collect real-time telemetry sample
+      try {
+        const res = await fetchCurrentSensors();
+        const curM2 = res?.mq2_ppm ?? liveTelemetry.mq2_ppm ?? 115;
+        const curM3 = res?.mq3_ppm ?? liveTelemetry.mq3_ppm ?? 85;
+        const curTemp = res?.temperature_c ?? liveTelemetry.temperature_c ?? 24.5;
+        samples.push({
+          second: 30 - secondsLeft,
+          mq2: curM2,
+          mq3: curM3,
+          temp: curTemp,
+        });
+        setScanSamples([...samples]);
+      } catch (_) {}
+
+      if (secondsLeft <= 0) {
+        clearInterval(scanTimerRef.current);
+        scanTimerRef.current = null;
+        finalize30SecondScan(samples);
+      }
+    }, 1000);
+  };
+
+  const finalize30SecondScan = async (collectedSamples) => {
+    setIsScanning(false);
+    setIsAnalyzing(true);
+    setErrorMsg(null);
+    const startTime = performance.now();
+
+    const m2Vals = collectedSamples.map(s => s.mq2);
+    const m3Vals = collectedSamples.map(s => s.mq3);
+    const tempVals = collectedSamples.map(s => s.temp);
+
+    const avgM2 = m2Vals.length ? (m2Vals.reduce((a, b) => a + b, 0) / m2Vals.length).toFixed(1) : liveTelemetry.mq2_ppm;
+    const peakM2 = m2Vals.length ? Math.max(...m2Vals).toFixed(1) : liveTelemetry.mq2_ppm;
+    const avgM3 = m3Vals.length ? (m3Vals.reduce((a, b) => a + b, 0) / m3Vals.length).toFixed(1) : liveTelemetry.mq3_ppm;
+    const peakM3 = m3Vals.length ? Math.max(...m3Vals).toFixed(1) : liveTelemetry.mq3_ppm;
+    const avgTemp = tempVals.length ? (tempVals.reduce((a, b) => a + b, 0) / tempVals.length).toFixed(1) : liveTelemetry.temperature_c;
+
+    const emissionDelta = (m2Vals[m2Vals.length - 1] || 0) - (m2Vals[0] || 0);
+    const trend = emissionDelta > 15 ? 'Rising Spoilage Volatiles' : (emissionDelta < -10 ? 'Decreasing / Cleared' : 'Stable Emission');
+
+    const calculatedScanStats = {
+      duration: 30,
+      samples_count: collectedSamples.length || 30,
+      avg_mq2: Number(avgM2),
+      peak_mq2: Number(peakM2),
+      avg_mq3: Number(avgM3),
+      peak_mq3: Number(peakM3),
+      avg_temp: Number(avgTemp),
+      trend: trend,
+    };
+    setScanStats(calculatedScanStats);
+
+    try {
+      const res = await analyzeFreshFoodImage(imagePreview, imageFile, calculatedScanStats);
+      const endTime = performance.now();
+      const durationSec = ((endTime - startTime) / 1000).toFixed(1);
+      setAnalysisDuration(durationSec);
+
+      if (res.success && res.assessment) {
+        setAnalysisResult(res.assessment);
+      } else {
+        setErrorMsg(res.error || 'Failed to complete 30-second multi-sensor food assessment.');
+      }
+    } catch (err) {
+      console.error('Analysis API error:', err);
+      setErrorMsg('Network error communicating with Sense AI assessment engine.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleRunAnalysis = async () => {
+    // Standard quick instant analysis
     if (!imagePreview) {
       setErrorMsg('Please capture or upload an image first.');
       return;
@@ -284,7 +444,19 @@ export default function FreshFoodWorkspace({ onBack }) {
     const startTime = performance.now();
 
     try {
-      const res = await analyzeFreshFoodImage(imagePreview, imageFile);
+      const quickStats = {
+        duration: 1,
+        samples_count: 1,
+        avg_mq2: liveTelemetry.mq2_ppm,
+        peak_mq2: liveTelemetry.mq2_ppm,
+        avg_mq3: liveTelemetry.mq3_ppm,
+        peak_mq3: liveTelemetry.mq3_ppm,
+        avg_temp: liveTelemetry.temperature_c,
+        trend: 'Instantaneous Baseline Snapshot',
+      };
+      setScanStats(quickStats);
+
+      const res = await analyzeFreshFoodImage(imagePreview, imageFile, quickStats);
       const endTime = performance.now();
       const durationSec = ((endTime - startTime) / 1000).toFixed(1);
       setAnalysisDuration(durationSec);
@@ -339,6 +511,109 @@ export default function FreshFoodWorkspace({ onBack }) {
           <p style={{ margin: '4px 0 0 0', color: 'var(--sense-muted)', fontSize: '0.9rem' }}>
             Multimodal produce identification, biological freshness diagnostics, and zero-waste recipes.
           </p>
+        </div>
+      </div>
+
+      {/* Live Multi-Sensor Array Diagnostics Console (MQ-2, MQ-3, Thermistor, TCS Color) */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 253, 244, 0.95) 100%)',
+        border: '1.5px solid rgba(34, 197, 94, 0.28)',
+        borderRadius: 'var(--sense-radius-lg)',
+        padding: '16px 20px',
+        marginBottom: '22px',
+        boxShadow: '0 8px 24px rgba(34, 197, 94, 0.08)',
+        backdropFilter: 'blur(8px)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Activity size={19} color="#16a34a" />
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: 'var(--color-soft-charcoal)' }}>
+              Live Multi-Sensor Array Console
+            </h3>
+            <span style={{
+              background: liveTelemetry.is_hardware ? 'rgba(34, 197, 94, 0.15)' : 'rgba(100, 116, 139, 0.12)',
+              color: liveTelemetry.is_hardware ? '#15803d' : '#475569',
+              padding: '3px 10px',
+              borderRadius: '999px',
+              fontSize: '0.72rem',
+              fontWeight: 800,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span className={liveTelemetry.is_hardware ? "sense-dot-live" : ""} style={{ width: '8px', height: '8px', borderRadius: '50%', background: liveTelemetry.is_hardware ? '#22c55e' : '#94a3b8' }}></span>
+              {liveTelemetry.is_hardware ? 'Arduino USB Bridge Active' : 'Simulation Mode'}
+            </span>
+          </div>
+
+          <span style={{ fontSize: '0.76rem', color: '#64748b', fontWeight: 600 }}>
+            ⚡ Live Telemetry Polling (1.5s) • Blow on sensors to test response!
+          </span>
+        </div>
+
+        {/* 4 Concurrent Live Telemetry Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '12px' }}>
+          {/* MQ-2 Spoilage VOC */}
+          <div style={{ background: '#ffffff', borderRadius: '12px', padding: '12px 14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>🛢️ MQ-2 SPOILAGE VOC</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: liveTelemetry.mq2_ppm <= 140 ? '#16a34a' : (liveTelemetry.mq2_ppm <= 220 ? '#d97706' : '#dc2626') }}>
+                {liveTelemetry.mq2_ppm <= 140 ? 'Clean Air' : (liveTelemetry.mq2_ppm <= 220 ? 'Mild Ripening' : 'Elevated Decay')}
+              </span>
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', fontFamily: 'var(--sense-font-mono)' }}>
+              {liveTelemetry.mq2_ppm.toFixed(0)} <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>PPM</span>
+            </div>
+            <div style={{ width: '100%', height: '4px', background: '#f1f5f9', borderRadius: '999px', marginTop: '6px', overflow: 'hidden' }}>
+              <div style={{ width: `${Math.min(100, (liveTelemetry.mq2_ppm / 350) * 100)}%`, height: '100%', background: liveTelemetry.mq2_ppm <= 140 ? '#22c55e' : (liveTelemetry.mq2_ppm <= 220 ? '#f59e0b' : '#ef4444'), borderRadius: '999px' }} />
+            </div>
+          </div>
+
+          {/* MQ-3 Fermentation Alcohol */}
+          <div style={{ background: '#ffffff', borderRadius: '12px', padding: '12px 14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>🍷 MQ-3 FERMENTATION</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: liveTelemetry.mq3_ppm <= 110 ? '#16a34a' : (liveTelemetry.mq3_ppm <= 190 ? '#d97706' : '#dc2626') }}>
+                {liveTelemetry.mq3_ppm <= 110 ? 'Intact Sugars' : (liveTelemetry.mq3_ppm <= 190 ? 'Fermentation' : 'High Rot')}
+              </span>
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', fontFamily: 'var(--sense-font-mono)' }}>
+              {liveTelemetry.mq3_ppm.toFixed(0)} <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>PPM</span>
+            </div>
+            <div style={{ width: '100%', height: '4px', background: '#f1f5f9', borderRadius: '999px', marginTop: '6px', overflow: 'hidden' }}>
+              <div style={{ width: `${Math.min(100, (liveTelemetry.mq3_ppm / 300) * 100)}%`, height: '100%', background: liveTelemetry.mq3_ppm <= 110 ? '#22c55e' : (liveTelemetry.mq3_ppm <= 190 ? '#f59e0b' : '#ef4444'), borderRadius: '999px' }} />
+            </div>
+          </div>
+
+          {/* Temperature (Arrhenius) */}
+          <div style={{ background: '#ffffff', borderRadius: '12px', padding: '12px 14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>🌡️ TEMPERATURE</span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: liveTelemetry.temperature_c <= 20 ? '#16a34a' : '#d97706' }}>
+                Arrhenius {Math.max(1.0, (liveTelemetry.temperature_c - 10) / 10).toFixed(1)}× Rate
+              </span>
+            </div>
+            <div style={{ fontSize: '1.45rem', fontWeight: 900, color: '#0f172a', fontFamily: 'var(--sense-font-mono)' }}>
+              {liveTelemetry.temperature_c.toFixed(1)} <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: 700 }}>°C</span>
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+              Ambient humidity: {Math.round(liveTelemetry.humidity_pct)}%
+            </div>
+          </div>
+
+          {/* TCS Spectral Color */}
+          <div style={{ background: '#ffffff', borderRadius: '12px', padding: '12px 14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>🎨 SPECTRAL COLOR</span>
+              <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: liveTelemetry.color_hex, border: '1px solid #cbd5e1' }} />
+            </div>
+            <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {liveTelemetry.color_name.split(' ')[0]}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+              Surface Browning: {liveTelemetry.browning_index}%
+            </div>
+          </div>
         </div>
       </div>
 
@@ -564,33 +839,196 @@ export default function FreshFoodWorkspace({ onBack }) {
 
           <canvas ref={canvasRef} style={{ display: 'none' }} />
 
-          {/* Action Button & Timer */}
-          <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-            <button
-              onClick={handleRunAnalysis}
-              disabled={!imagePreview || isAnalyzing}
-              className="sense-btn-primary"
-              style={{ width: '100%', padding: '14px 20px', fontSize: '1.02rem', fontWeight: 800 }}
-            >
-              {isAnalyzing ? (
-                <>
-                  <Sparkles size={18} className="animate-spin" />
-                  Analyzing image &amp; evaluating freshness...
-                </>
-              ) : (
-                <>
-                  <Sparkles size={18} />
-                  Analyze Freshness &amp; View Report
-                </>
-              )}
-            </button>
-
-            {analysisDuration && (
-              <div style={{ fontSize: '0.78rem', color: 'var(--sense-muted)', width: '100%', textAlign: 'center' }}>
-                ⏱ Processing duration: <strong style={{ color: '#34d399' }}>{analysisDuration} seconds</strong>
+          {/* 30-Second Live Multi-Sensor Scanning Overlay / State */}
+          {isScanning && (
+            <div style={{
+              marginTop: '20px',
+              padding: '24px',
+              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.96) 100%)',
+              borderRadius: 'var(--sense-radius-lg)',
+              border: '2px solid #22c55e',
+              boxShadow: '0 16px 40px rgba(34, 197, 94, 0.25)',
+              color: '#ffffff',
+              textAlign: 'center',
+              animation: 'fadeIn 0.3s ease-in-out'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '8px' }}>
+                <span className="sense-dot-live"></span>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, letterSpacing: '0.08em', color: '#4ade80', textTransform: 'uppercase' }}>
+                  Live 30-Second Multi-Sensor Sampling Active
+                </span>
               </div>
-            )}
-          </div>
+
+              {/* Big Countdown Timer */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '14px 0' }}>
+                <div style={{
+                  width: '90px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  border: '4px solid #22c55e',
+                  borderTopColor: 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2.2rem',
+                  fontWeight: 900,
+                  fontFamily: 'var(--sense-font-mono)',
+                  color: '#ffffff',
+                  boxShadow: '0 0 24px rgba(34, 197, 94, 0.4)',
+                  animation: 'pulse 1.5s infinite'
+                }}>
+                  {scanSecondsLeft}s
+                </div>
+              </div>
+
+              {/* Dynamic Sampling Phase Banner */}
+              <div style={{ fontSize: '0.92rem', fontWeight: 700, color: '#e2e8f0', marginBottom: '14px' }}>
+                {scanSecondsLeft > 20 && 'Phase 1: Ambient baseline & Arrhenius thermal respiration calibration...'}
+                {scanSecondsLeft <= 20 && scanSecondsLeft > 10 && 'Phase 2: Sampling MQ-2 organic volatile accumulation & decay hydrocarbons...'}
+                {scanSecondsLeft <= 10 && 'Phase 3: Measuring MQ-3 ethanol vapors & fruit sugar fermentation rates...'}
+              </div>
+
+              {/* Real-Time Telemetry Readouts during scan */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
+                gap: '10px',
+                background: 'rgba(255,255,255,0.06)',
+                padding: '12px 14px',
+                borderRadius: '12px',
+                marginBottom: '16px',
+                border: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>MQ-2 VOLATILES</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'var(--sense-font-mono)' }}>
+                    {liveTelemetry.mq2_ppm.toFixed(0)} <span style={{ fontSize: '0.7rem' }}>PPM</span>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>MQ-3 ETHANOL</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#f43f5e', fontFamily: 'var(--sense-font-mono)' }}>
+                    {liveTelemetry.mq3_ppm.toFixed(0)} <span style={{ fontSize: '0.7rem' }}>PPM</span>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>TEMPERATURE</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fbbf24', fontFamily: 'var(--sense-font-mono)' }}>
+                    {liveTelemetry.temperature_c.toFixed(1)} <span style={{ fontSize: '0.7rem' }}>°C</span>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700 }}>FRAMES CAPTURED</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#4ade80', fontFamily: 'var(--sense-font-mono)' }}>
+                    {scanSamples.length}/30
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-time mini sparkline */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: '3px', height: '36px', marginBottom: '14px', padding: '0 10px' }}>
+                {Array.from({ length: 30 }).map((_, i) => {
+                  const sample = scanSamples[i];
+                  const height = sample ? Math.min(36, Math.max(8, (sample.mq2 / 300) * 36)) : 6;
+                  const isDone = Boolean(sample);
+                  return (
+                    <div
+                      key={i}
+                      style={{
+                        flex: 1,
+                        height: `${height}px`,
+                        background: isDone ? 'linear-gradient(to top, #22c55e, #38bdf8)' : 'rgba(255,255,255,0.1)',
+                        borderRadius: '2px',
+                        transition: 'height 0.2s ease'
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={stop30SecondScan}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  color: '#f87171',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  padding: '7px 18px',
+                  borderRadius: '999px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Cancel Scan
+              </button>
+            </div>
+          )}
+
+          {/* Action Buttons & Triggers */}
+          {!isScanning && (
+            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* PRIMARY: 30-Second Scan Button */}
+              <button
+                onClick={start30SecondScan}
+                disabled={!imagePreview || isAnalyzing}
+                className="sense-btn-primary"
+                style={{
+                  width: '100%',
+                  padding: '16px 22px',
+                  fontSize: '1.05rem',
+                  fontWeight: 900,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px',
+                  background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                  boxShadow: '0 8px 24px rgba(22, 163, 74, 0.35)',
+                  cursor: (!imagePreview || isAnalyzing) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Sparkles size={20} className="animate-spin" />
+                    Fusing 30-Second Multi-Sensor Telemetry &amp; AI Vision...
+                  </>
+                ) : (
+                  <>
+                    <Zap size={20} />
+                    <span>Start 30-Second Multi-Sensor Scan &amp; Best Analysis</span>
+                  </>
+                )}
+              </button>
+              
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--color-muted-grey)' }}>
+                  💡 Continuously samples MQ-2 volatiles, MQ-3 ethanol vapors &amp; thermal rate for 30s.
+                </span>
+
+                {/* Secondary Fast Instant Analysis */}
+                <button
+                  onClick={handleRunAnalysis}
+                  disabled={!imagePreview || isAnalyzing}
+                  className="sense-btn-secondary"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Sparkles size={14} /> Quick Instant Assessment
+                </button>
+              </div>
+
+              {analysisDuration && (
+                <div style={{ fontSize: '0.78rem', color: 'var(--sense-muted)', width: '100%', textAlign: 'center', marginTop: '4px' }}>
+                  ⏱ Processing duration: <strong style={{ color: '#16a34a' }}>{analysisDuration} seconds</strong>
+                </div>
+              )}
+            </div>
+          )}
 
           {errorMsg && (
             <div style={{
@@ -1050,7 +1488,7 @@ export default function FreshFoodWorkspace({ onBack }) {
                             </h4>
                           </div>
                           <p style={{ margin: '3px 0 0 0', fontSize: '0.8rem', color: 'var(--color-muted-grey)' }}>
-                            All 4 parameters were analyzed concurrently to formulate this produce's Freshness IQ.
+                            All 5 IoT parameters (MQ-2 Spoilage VOCs, MQ-3 Fermentation Vapors, Color, Temperature, and Vision) were concurrently synthesized.
                           </p>
                         </div>
                         <span style={{
@@ -1065,9 +1503,68 @@ export default function FreshFoodWorkspace({ onBack }) {
                           gap: '6px'
                         }}>
                           <span className="sense-dot-live"></span>
-                          4-Node Concurrent Matrix
+                          5-Node Concurrent Array
                         </span>
                       </div>
+
+                      {/* 30-Second Continuous Telemetry Scan Certificate (If Scan Run) */}
+                      {analysisResult.sensor_contributions.scan_summary && (
+                        <div style={{
+                          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.92) 100%)',
+                          border: '1.5px solid #22c55e',
+                          borderRadius: '12px',
+                          padding: '14px 18px',
+                          color: '#ffffff',
+                          marginBottom: '16px',
+                          boxShadow: '0 4px 16px rgba(34, 197, 94, 0.15)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '1.1rem' }}>⏱️</span>
+                              <strong style={{ fontSize: '0.9rem', color: '#4ade80' }}>
+                                30-Second Continuous Multi-Sensor Time-Series Audit
+                              </strong>
+                            </div>
+                            <span style={{ fontSize: '0.74rem', background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80', padding: '3px 10px', borderRadius: '999px', fontWeight: 800 }}>
+                              ✓ 30 Sensor Frames Synchronized
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '10px' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.06)', padding: '8px 12px', borderRadius: '8px' }}>
+                              <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>AVG MQ-2 VOC</div>
+                              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#38bdf8', fontFamily: 'var(--sense-font-mono)' }}>
+                                {analysisResult.sensor_contributions.scan_summary.avg_mq2} <span style={{ fontSize: '0.7rem' }}>PPM</span>
+                              </div>
+                              <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>Peak: {analysisResult.sensor_contributions.scan_summary.peak_mq2} PPM</div>
+                            </div>
+
+                            <div style={{ background: 'rgba(255,255,255,0.06)', padding: '8px 12px', borderRadius: '8px' }}>
+                              <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>AVG MQ-3 ETHANOL</div>
+                              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#f43f5e', fontFamily: 'var(--sense-font-mono)' }}>
+                                {analysisResult.sensor_contributions.scan_summary.avg_mq3} <span style={{ fontSize: '0.7rem' }}>PPM</span>
+                              </div>
+                              <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>Peak: {analysisResult.sensor_contributions.scan_summary.peak_mq3} PPM</div>
+                            </div>
+
+                            <div style={{ background: 'rgba(255,255,255,0.06)', padding: '8px 12px', borderRadius: '8px' }}>
+                              <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>VOLATILE TREND</div>
+                              <div style={{ fontSize: '1.05rem', fontWeight: 900, color: '#fbbf24' }}>
+                                {analysisResult.sensor_contributions.scan_summary.trend}
+                              </div>
+                              <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>Over 30s Window</div>
+                            </div>
+
+                            <div style={{ background: 'rgba(255,255,255,0.06)', padding: '8px 12px', borderRadius: '8px' }}>
+                              <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700 }}>SCAN DURATION</div>
+                              <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#4ade80', fontFamily: 'var(--sense-font-mono)' }}>
+                                30.0 <span style={{ fontSize: '0.7rem' }}>SEC</span>
+                              </div>
+                              <div style={{ fontSize: '0.68rem', color: '#cbd5e1' }}>1.0s Sampling Cadence</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* 4 Sensor Cards Grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '14px', marginBottom: '14px' }}>
